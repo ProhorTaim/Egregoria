@@ -18,6 +18,7 @@ mod game_loop;
 mod gui;
 mod init;
 mod inputmap;
+mod i18n;
 mod network;
 mod rendering;
 

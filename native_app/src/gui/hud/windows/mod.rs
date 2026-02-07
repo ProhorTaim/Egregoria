@@ -3,6 +3,7 @@ pub mod load;
 pub mod settings;
 
 use crate::inputmap::{InputAction, InputMap};
+use crate::i18n::I18n;
 use crate::uiworld::UiWorld;
 use goryak::button_primary;
 use simulation::Simulation;
@@ -20,21 +21,22 @@ pub struct GUIWindows {
 }
 
 impl GUIWindows {
-    pub fn menu(&mut self) {
-        if button_primary("Economy").show().clicked {
+    pub fn menu(&mut self, uiworld: &UiWorld) {
+        let i18n = uiworld.read::<I18n>();
+        if button_primary(i18n.tr("ui.windows.economy")).show().clicked {
             self.economy_open ^= true;
         }
 
-        if button_primary("Settings").show().clicked {
+        if button_primary(i18n.tr("ui.windows.settings")).show().clicked {
             self.settings_open ^= true;
         }
 
-        if button_primary("Load").show().clicked {
+        if button_primary(i18n.tr("ui.windows.load")).show().clicked {
             self.load_open ^= true;
         }
 
         #[cfg(feature = "multiplayer")]
-        if button_primary("Network").show().clicked {
+        if button_primary(i18n.tr("ui.windows.network")).show().clicked {
             self.network_open ^= true;
         }
     }

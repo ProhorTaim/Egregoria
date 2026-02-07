@@ -1,5 +1,6 @@
 use crate::gui::{ErrorTooltip, InspectedBuilding, PotentialCommands, Tool};
 use crate::inputmap::{InputAction, InputMap};
+use crate::i18n::I18n;
 use crate::rendering::immediate::{ImmediateDraw, ImmediateSound};
 use crate::uiworld::UiWorld;
 use engine::AudioKind;
@@ -34,6 +35,7 @@ pub struct SpecialBuildingResource {
 /// Allows to build special buildings like farms, factories, etc.
 pub fn specialbuilding(sim: &Simulation, uiworld: &UiWorld) {
     profiling::scope!("gui::specialbuilding");
+    let i18n = uiworld.read::<I18n>();
     let mut state = uiworld.write::<SpecialBuildingResource>();
     let tool = *uiworld.read::<Tool>();
     let inp = uiworld.read::<InputMap>();
@@ -118,7 +120,8 @@ pub fn specialbuilding(sim: &Simulation, uiworld: &UiWorld) {
             })
             .min_by_key(move |p| OrderedFloat(p.points().project_dist2(mpos)));
         let Some(closest_road) = closest_road else {
-            *uiworld.write::<ErrorTooltip>() = ErrorTooltip::new(Cow::Borrowed("No road nearby"));
+            *uiworld.write::<ErrorTooltip>() =
+                ErrorTooltip::new(Cow::Owned(i18n.tr("ui.error.no_road").to_string()));
             return draw(hover_obb, true);
         };
 
@@ -126,7 +129,8 @@ pub fn specialbuilding(sim: &Simulation, uiworld: &UiWorld) {
         let dir = dir.xy();
 
         if !proj.is_close(mpos, half_diag + closest_road.width * 0.5) {
-            *uiworld.write::<ErrorTooltip>() = ErrorTooltip::new(Cow::Borrowed("No road nearby"));
+            *uiworld.write::<ErrorTooltip>() =
+                ErrorTooltip::new(Cow::Owned(i18n.tr("ui.error.no_road").to_string()));
             return draw(hover_obb, true);
         }
 
@@ -148,14 +152,14 @@ pub fn specialbuilding(sim: &Simulation, uiworld: &UiWorld) {
 
         if proj.distance(first) < half_diag || proj.distance(last) < half_diag {
             *uiworld.write::<ErrorTooltip>() =
-                ErrorTooltip::new(Cow::Borrowed("Too close to side"));
+                ErrorTooltip::new(Cow::Owned(i18n.tr("ui.error.too_close_side").to_string()));
             draw(obb, true);
             return;
         }
 
         if closest_road.sidewalks(closest_road.src).incoming.is_none() {
             *uiworld.write::<ErrorTooltip>() =
-                ErrorTooltip::new(Cow::Borrowed("Sidewalk required"));
+                ErrorTooltip::new(Cow::Owned(i18n.tr("ui.error.sidewalk_required").to_string()));
             draw(obb, true);
             return;
         }
@@ -179,7 +183,7 @@ pub fn specialbuilding(sim: &Simulation, uiworld: &UiWorld) {
         || state.last_obb.map(|x| x.intersects(&obb)).unwrap_or(false)
     {
         *uiworld.write::<ErrorTooltip>() =
-            ErrorTooltip::new(Cow::Borrowed("Intersecting with something"));
+            ErrorTooltip::new(Cow::Owned(i18n.tr("ui.error.intersecting").to_string()));
         draw(obb, true);
         return;
     }

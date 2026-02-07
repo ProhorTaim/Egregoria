@@ -8,31 +8,40 @@ use simulation::map_dynamic::{BuildingInfos, ElectricityFlow};
 use simulation::souls::freight_station::FreightTrainState;
 use simulation::world_command::WorldCommand;
 use simulation::{Simulation, SoulID};
-use std::borrow::Cow;
 use yakui::widgets::Pad;
 use yakui::Vec2;
 
 use crate::gui::inspect::entity_link;
 use crate::gui::item_icon_yakui;
+use crate::i18n::I18n;
 use crate::uiworld::UiWorld;
 
-fn label(x: impl Into<Cow<'static, str>>) {
-    textc(on_secondary_container(), x);
+fn label(x: impl Into<String>) {
+    textc(on_secondary_container(), x.into());
 }
 
 /// Inspect a specific building, showing useful information about it
 pub fn inspect_building(uiworld: &UiWorld, sim: &Simulation, id: BuildingID) -> bool {
+    let i18n = uiworld.read::<I18n>();
     let map = sim.map();
     let Some(building) = map.buildings().get(id) else {
         return false;
     };
 
-    let title: &str = match building.kind {
-        BuildingKind::House => "House",
-        BuildingKind::GoodsCompany(id) => &id.prototype().name,
-        BuildingKind::RailFreightStation(id) => &id.prototype().name,
-        BuildingKind::TrainStation => "Train Station",
-        BuildingKind::ExternalTrading => "External Trading",
+    let title = match building.kind {
+        BuildingKind::House => i18n.tr("ui.inspect.house").to_string(),
+        BuildingKind::GoodsCompany(id) => i18n.proto_label(
+            "goods_company",
+            &id.prototype().name,
+            &id.prototype().label,
+        ),
+        BuildingKind::RailFreightStation(id) => i18n.proto_label(
+            "freight_station",
+            &id.prototype().name,
+            &id.prototype().label,
+        ),
+        BuildingKind::TrainStation => i18n.tr("ui.inspect.train_station").to_string(),
+        BuildingKind::ExternalTrading => i18n.tr("ui.inspect.external_trading").to_string(),
     };
 
     let mut is_open = true;
@@ -76,7 +85,7 @@ pub fn inspect_building(uiworld: &UiWorld, sim: &Simulation, id: BuildingID) -> 
                     })
                 }
 
-                label("Fill angle");
+                label(i18n.tr("ui.inspect.fill_angle"));
             });
 
             ProgressBar {
@@ -85,7 +94,13 @@ pub fn inspect_building(uiworld: &UiWorld, sim: &Simulation, id: BuildingID) -> 
                 color: primary().adjust(0.7),
             }
             .show_children(|| {
-                label(format!("area: {}/{}", zone.area, MAX_ZONE_AREA));
+                label(i18n.tr_args(
+                    "ui.inspect.zone_area",
+                    &[
+                        ("value", format!("{:.0}", zone.area)),
+                        ("max", format!("{:.0}", MAX_ZONE_AREA)),
+                    ],
+                ));
             });
         }
     });
@@ -94,6 +109,7 @@ pub fn inspect_building(uiworld: &UiWorld, sim: &Simulation, id: BuildingID) -> 
 }
 
 fn render_house(uiworld: &UiWorld, sim: &Simulation, b: &Building) {
+    let i18n = uiworld.read::<I18n>();
     let binfos = sim.read::<BuildingInfos>();
     let Some(info) = binfos.get(b.id) else {
         return;
@@ -103,11 +119,11 @@ fn render_house(uiworld: &UiWorld, sim: &Simulation, b: &Building) {
     };
 
     minrow(5.0, || {
-        label("Owner");
+        label(i18n.tr("ui.inspect.owner"));
         entity_link(uiworld, sim, owner);
     });
 
-    label("Currently in the house:");
+    label(i18n.tr("ui.inspect.currently_in_house"));
     for &soul in info.inside.iter() {
         let SoulID::Human(soul) = soul else {
             continue;
@@ -117,6 +133,7 @@ fn render_house(uiworld: &UiWorld, sim: &Simulation, b: &Building) {
 }
 
 fn render_freightstation(uiworld: &UiWorld, sim: &Simulation, b: &Building) {
+    let i18n = uiworld.read::<I18n>();
     let Some(SoulID::FreightStation(owner)) = sim.read::<BuildingInfos>().owner(b.id) else {
         return;
     };
@@ -124,23 +141,29 @@ fn render_freightstation(uiworld: &UiWorld, sim: &Simulation, b: &Building) {
         return;
     };
 
-    label(format!("Waiting cargo: {}", freight.f.waiting_cargo));
-    label(format!("Wanted cargo: {}", freight.f.wanted_cargo));
+    label(i18n.tr_args(
+        "ui.inspect.waiting_cargo",
+        &[("value", format!("{}", freight.f.waiting_cargo))],
+    ));
+    label(i18n.tr_args(
+        "ui.inspect.wanted_cargo",
+        &[("value", format!("{}", freight.f.wanted_cargo))],
+    ));
 
     fixed_spacer((0.0, 10.0));
-    label("Trains:");
+    label(i18n.tr("ui.inspect.trains"));
     for (tid, state) in &freight.f.trains {
         minrow(5.0, || {
             entity_link(uiworld, sim, *tid);
             match state {
                 FreightTrainState::Arriving => {
-                    label("Arriving");
+                    label(i18n.tr("ui.inspect.train_arriving"));
                 }
                 FreightTrainState::Loading => {
-                    label("Loading");
+                    label(i18n.tr("ui.inspect.train_loading"));
                 }
                 FreightTrainState::Moving => {
-                    label("Moving");
+                    label(i18n.tr("ui.inspect.train_moving"));
                 }
             }
         });
@@ -148,6 +171,7 @@ fn render_freightstation(uiworld: &UiWorld, sim: &Simulation, b: &Building) {
 }
 
 fn render_goodscompany(uiworld: &UiWorld, sim: &Simulation, b: &Building) {
+    let i18n = uiworld.read::<I18n>();
     let owner = sim.read::<BuildingInfos>().owner(b.id);
 
     let Some(SoulID::GoodsCompany(c_id)) = owner else {
@@ -171,12 +195,18 @@ fn render_goodscompany(uiworld: &UiWorld, sim: &Simulation, b: &Building) {
         color: primary().adjust(0.7),
     }
     .show_children(|| {
-        label(format!("workers: {}/{}", workers.0.len(), max_workers));
+        label(i18n.tr_args(
+            "ui.inspect.workers",
+            &[
+                ("value", format!("{}", workers.0.len())),
+                ("max", format!("{}", max_workers)),
+            ],
+        ));
     });
 
     if let Some(driver) = goods.driver {
         minrow(5.0, || {
-            label("Driver is");
+            label(i18n.tr("ui.inspect.driver_is"));
             entity_link(uiworld, sim, driver);
         });
     }
@@ -188,9 +218,12 @@ fn render_goodscompany(uiworld: &UiWorld, sim: &Simulation, b: &Building) {
             color: primary().adjust(0.7),
         }
         .show_children(|| {
-            label(format!(
-                "productivity: {:.0}%",
-                (productivity * 100.0).round()
+            label(i18n.tr_args(
+                "ui.inspect.productivity",
+                &[(
+                    "value",
+                    format!("{:.0}", (productivity * 100.0).round()),
+                )],
             ));
         });
     }
@@ -209,18 +242,20 @@ fn render_goodscompany(uiworld: &UiWorld, sim: &Simulation, b: &Building) {
                 color: primary().adjust(0.7),
             }
             .show_children(|| {
-                label(format!(
-                    "power: {}/{}",
-                    productivity as f64 * power_c,
-                    power_c
+                label(i18n.tr_args(
+                    "ui.inspect.power",
+                    &[
+                        ("value", format!("{}", productivity as f64 * power_c)),
+                        ("max", format!("{}", power_c)),
+                    ],
                 ));
             });
         }
 
         if let Some(power_prod) = proto.power_production {
-            label(format!(
-                "producing power: {}",
-                power_prod * productivity as f64
+            label(i18n.tr_args(
+                "ui.inspect.power_producing",
+                &[("value", format!("{}", power_prod * productivity as f64))],
             ));
 
             let stats = elec_flow.network_stats(net_id);
@@ -231,11 +266,19 @@ fn render_goodscompany(uiworld: &UiWorld, sim: &Simulation, b: &Building) {
                 color: primary().adjust(0.7),
             }
             .show_children(|| {
-                label(format!(
-                    "Network health: {}/{}={:.0}%",
-                    stats.produced_power,
-                    stats.consumed_power,
-                    (100 * stats.produced_power.0) / stats.consumed_power.0.max(1)
+                label(i18n.tr_args(
+                    "ui.inspect.network_health",
+                    &[
+                        ("prod", format!("{}", stats.produced_power)),
+                        ("cons", format!("{}", stats.consumed_power)),
+                        (
+                            "pct",
+                            format!(
+                                "{:.0}",
+                                (100 * stats.produced_power.0) / stats.consumed_power.0.max(1)
+                            ),
+                        ),
+                    ],
                 ));
             });
         }
@@ -247,11 +290,14 @@ fn render_goodscompany(uiworld: &UiWorld, sim: &Simulation, b: &Building) {
         color: primary().adjust(0.7),
     }
     .show_children(|| {
-        label(format!("{:.0}%", goods.progress * 100.0));
+        label(i18n.tr_args(
+            "ui.inspect.progress_pct",
+            &[("value", format!("{:.0}", goods.progress * 100.0))],
+        ));
     });
 
     fixed_spacer((0.0, 10.0));
-    label("Storage");
+    label(i18n.tr("ui.inspect.storage"));
 
     let jobopening = ItemID::new("job-opening");
     for (&id, m) in market.iter() {
@@ -267,13 +313,14 @@ fn render_goodscompany(uiworld: &UiWorld, sim: &Simulation, b: &Building) {
 }
 
 fn render_recipe(uiworld: &UiWorld, recipe: &Recipe) {
+    let i18n = uiworld.read::<I18n>();
     if recipe.consumption.is_empty() {
-        label("No Inputs");
+        label(i18n.tr("ui.inspect.no_inputs"));
     } else {
         label(if recipe.consumption.len() == 1 {
-            "Input"
+            i18n.tr("ui.inspect.input")
         } else {
-            "Inputs"
+            i18n.tr("ui.inspect.inputs")
         });
         minrow(5.0, || {
             for item in recipe.consumption.iter() {
@@ -283,12 +330,12 @@ fn render_recipe(uiworld: &UiWorld, recipe: &Recipe) {
     }
 
     if recipe.production.is_empty() {
-        label("No Outputs");
+        label(i18n.tr("ui.inspect.no_outputs"));
     } else {
         label(if recipe.production.len() == 1 {
-            "Output"
+            i18n.tr("ui.inspect.output")
         } else {
-            "Outputs"
+            i18n.tr("ui.inspect.outputs")
         });
         minrow(5.0, || {
             for item in recipe.production.iter() {

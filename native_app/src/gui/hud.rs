@@ -15,6 +15,7 @@ use crate::gui::inspect::new_inspector;
 use crate::gui::textures::UiTextures;
 use crate::gui::windows::settings::Settings;
 use crate::gui::GuiState;
+use crate::i18n::I18n;
 use crate::uiworld::{SaveLoadState, UiWorld};
 
 pub mod chat;
@@ -27,6 +28,12 @@ pub mod windows;
 /// Root GUI entrypoint
 pub fn render_newgui(uiworld: &UiWorld, sim: &Simulation) {
     profiling::scope!("hud::render");
+    {
+        let lang = uiworld.read::<Settings>().language;
+        if uiworld.read::<I18n>().language() != lang {
+            uiworld.write::<I18n>().set_language(lang);
+        }
+    }
     auto_save(uiworld);
 
     if uiworld.read::<GuiState>().hidden {
@@ -107,6 +114,8 @@ fn power_errors(uiworld: &UiWorld, sim: &Simulation) {
 
 pub fn item_icon_yakui(uiworld: &UiWorld, id: ItemID, multiplier: i32) {
     let item = id.prototype();
+    let i18n = uiworld.read::<I18n>();
+    let item_label = i18n.proto_label("item", &item.name, &item.label);
     minrow(5.0, || {
         if let Some(id) = uiworld
             .read::<UiTextures>()
@@ -125,12 +134,12 @@ pub fn item_icon_yakui(uiworld: &UiWorld, id: ItemID, multiplier: i32) {
                 reflow(Alignment::CENTER, Pivot::TOP_LEFT, Dim2::ZERO, || {
                     textc(
                         on_secondary_container(),
-                        format!("{} x{}", item.name, multiplier),
+                        format!("{} x{}", item_label, multiplier),
                     );
                 });
             }
         } else {
-            textc(on_secondary_container(), format!("- {} ", &item.label));
+            textc(on_secondary_container(), format!("- {} ", item_label));
         }
         textc(on_secondary_container(), format!("x{multiplier}"))
     });

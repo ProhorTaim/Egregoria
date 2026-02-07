@@ -11,7 +11,7 @@ use yakui_widgets::widgets::{Button, List, ListResponse, Pad, PadResponse, Text}
 
 use crate::{on_primary, on_secondary, primary, secondary, DEFAULT_FONT_SIZE};
 
-pub fn checkbox_value(v: &mut bool, color: Color, label: &'static str) {
+pub fn checkbox_value(v: &mut bool, color: Color, label: impl Into<Cow<'static, str>>) {
     minrow(5.0, || {
         *v = yakui_widgets::checkbox(*v).checked;
         textc(color, label);

@@ -7,9 +7,11 @@ use simulation::map::TerraformKind;
 use crate::gui::hud::toolbox::{select_triangle, updown_value};
 use crate::gui::terraforming::TerraformingResource;
 use crate::gui::textures::UiTextures;
+use crate::i18n::I18n;
 use crate::uiworld::UiWorld;
 
 pub fn terraform_properties(uiw: &UiWorld) {
+    let i18n = uiw.read::<I18n>();
     let state = &mut *uiw.write::<TerraformingResource>();
 
     padxy(0.0, 10.0, || {
@@ -23,20 +25,25 @@ pub fn terraform_properties(uiw: &UiWorld) {
             let terraform_choices = &[
                 (
                     TerraformKind::Elevation,
-                    "Elevation (up/down)",
+                    "ui.terraform.elevation",
                     "terraforming_raise_lower",
                 ),
-                (TerraformKind::Smooth, "Smooth", "terraforming_smooth"),
-                (TerraformKind::Level, "Level", "terraforming_level"),
-                (TerraformKind::Slope, "Slope", "terraforming_slope"),
-                (TerraformKind::Erode, "Erode", "terraforming_erode"),
+                (TerraformKind::Smooth, "ui.terraform.smooth", "terraforming_smooth"),
+                (TerraformKind::Level, "ui.terraform.level", "terraforming_level"),
+                (TerraformKind::Slope, "ui.terraform.slope", "terraforming_slope"),
+                (TerraformKind::Erode, "ui.terraform.erode", "terraforming_erode"),
             ];
 
             for (kind, label, icon) in terraform_choices {
                 column(|| {
                     let enabled = state.kind == *kind;
-                    if primary_image_button(texs.get(icon), Vec2::new(64.0, 64.0), enabled, *label)
-                        .clicked
+                    if primary_image_button(
+                        texs.get(icon),
+                        Vec2::new(64.0, 64.0),
+                        enabled,
+                        i18n.tr(label).to_string(),
+                    )
+                    .clicked
                     {
                         state.kind = *kind;
                     }
@@ -58,8 +65,13 @@ pub fn terraform_properties(uiw: &UiWorld) {
             for (radius, label, icon) in radius_choices {
                 column(|| {
                     let enabled = state.radius == *radius;
-                    if primary_image_button(texs.get(icon), Vec2::new(64.0, 64.0), enabled, *label)
-                        .clicked
+                    if primary_image_button(
+                        texs.get(icon),
+                        Vec2::new(64.0, 64.0),
+                        enabled,
+                        *label,
+                    )
+                    .clicked
                     {
                         state.radius = *radius;
                     }
@@ -83,16 +95,21 @@ pub fn terraform_properties(uiw: &UiWorld) {
             fixed_spacer((30.0, 0.0));
 
             let amount_choices = &[
-                (100.0, "Small", "terraforming_speed_low"),
-                (300.0, "Medium", "terraforming_speed_medium"),
-                (500.0, "Large", "terraforming_speed_large"),
+                (100.0, "ui.terraform.amount_small", "terraforming_speed_low"),
+                (300.0, "ui.terraform.amount_medium", "terraforming_speed_medium"),
+                (500.0, "ui.terraform.amount_large", "terraforming_speed_large"),
             ];
 
             for (amount, label, icon) in amount_choices {
                 column(|| {
                     let enabled = state.amount == *amount;
-                    if primary_image_button(texs.get(icon), Vec2::new(64.0, 64.0), enabled, *label)
-                        .clicked
+                    if primary_image_button(
+                        texs.get(icon),
+                        Vec2::new(64.0, 64.0),
+                        enabled,
+                        i18n.tr(label).to_string(),
+                    )
+                    .clicked
                     {
                         state.amount = *amount;
                     }

@@ -1,6 +1,7 @@
 use crate::debug_gui::debug_window::DebugState;
 use crate::gui::follow::FollowEntity;
 use crate::gui::{InspectedBuilding, InspectedEntity};
+use crate::i18n::I18n;
 use crate::uiworld::UiWorld;
 use goryak::{button_primary, primary_link};
 use inspect_building::inspect_building;
@@ -97,8 +98,9 @@ pub fn follow_button(uiworld: &UiWorld, id: impl Into<AnyEntity>) {
 }
 
 fn follow_button_inner(uiworld: &UiWorld, id: AnyEntity) {
+    let i18n = uiworld.read::<I18n>();
     let mut follow = uiworld.write::<FollowEntity>();
-    if follow.0 != Some(id) && button_primary("follow").show().clicked {
+    if follow.0 != Some(id) && button_primary(i18n.tr("ui.inspect.follow")).show().clicked {
         follow.0 = Some(id);
     }
 }

@@ -1,6 +1,5 @@
 use goryak::{dragvalue, fixed_spacer, minrow, on_secondary_container, textc, Window};
 use prototypes::ItemID;
-use std::borrow::Cow;
 use yakui::widgets::Pad;
 
 use simulation::economy::Market;
@@ -11,10 +10,12 @@ use simulation::{HumanID, Simulation};
 
 use crate::gui::inspect::{building_link, follow_button};
 use crate::gui::item_icon_yakui;
+use crate::i18n::I18n;
 use crate::uiworld::UiWorld;
 
 /// Inspect a specific building, showing useful information about it
 pub fn inspect_human(uiworld: &UiWorld, sim: &Simulation, id: HumanID) -> bool {
+    let i18n = uiworld.read::<I18n>();
     let Some(human) = sim.get(id) else {
         return false;
     };
@@ -24,8 +25,8 @@ pub fn inspect_human(uiworld: &UiWorld, sim: &Simulation, id: HumanID) -> bool {
 
     let mut is_open = true;
 
-    fn label(x: impl Into<Cow<'static, str>>) {
-        textc(on_secondary_container(), x);
+    fn label(x: impl Into<String>) {
+        textc(on_secondary_container(), x.into());
     }
 
     Window {
@@ -43,11 +44,11 @@ pub fn inspect_human(uiworld: &UiWorld, sim: &Simulation, id: HumanID) -> bool {
         match human.location {
             Location::Outside => {}
             Location::Vehicle(_) => {
-                label("In a vehicle");
+                label(i18n.tr("ui.inspect.human.in_vehicle"));
             }
             Location::Building(x) => {
                 minrow(5.0, || {
-                    label("In a building:");
+                    label(i18n.tr("ui.inspect.human.in_building"));
                     building_link(uiworld, sim, x);
                 });
             }
@@ -56,11 +57,14 @@ pub fn inspect_human(uiworld: &UiWorld, sim: &Simulation, id: HumanID) -> bool {
         if let Some(ref dest) = human.router.target_dest {
             match dest {
                 Destination::Outside(pos) => {
-                    label(format!("Going to {}", pos));
+                    label(i18n.tr_args(
+                        "ui.inspect.human.going_to",
+                        &[("value", format!("{}", pos))],
+                    ));
                 }
                 Destination::Building(b) => {
                     minrow(5.0, || {
-                        label("Going to building");
+                        label(i18n.tr("ui.inspect.human.going_to_building"));
                         building_link(uiworld, sim, *b);
                     });
                 }
@@ -68,43 +72,46 @@ pub fn inspect_human(uiworld: &UiWorld, sim: &Simulation, id: HumanID) -> bool {
         }
 
         minrow(5.0, || {
-            label("House is");
+            label(i18n.tr("ui.inspect.human.house_is"));
             building_link(uiworld, sim, human.home.house);
         });
 
-        label(format!("Last ate: {}", human.food.last_ate));
+        label(i18n.tr_args(
+            "ui.inspect.human.last_ate",
+            &[("value", format!("{}", human.food.last_ate))],
+        ));
 
         if let Some(ref x) = human.work {
             minrow(5.0, || {
-                label("Working at");
+                label(i18n.tr("ui.inspect.human.working_at"));
                 building_link(uiworld, sim, x.workplace);
                 match x.kind {
                     WorkKind::Driver { .. } => {
-                        label("as a driver");
+                        label(i18n.tr("ui.inspect.human.as_driver"));
                     }
                     WorkKind::Worker => {
-                        label("as a worker");
+                        label(i18n.tr("ui.inspect.human.as_worker"));
                     }
                 }
             });
         }
 
         fixed_spacer((0.0, 10.0));
-        label("Desires");
+        label(i18n.tr("ui.inspect.human.desires"));
         minrow(5.0, || {
             let mut score = human.food.last_score;
             dragvalue().show(&mut score);
-            label("Food");
+            label(i18n.tr("ui.inspect.human.food"));
         });
         minrow(5.0, || {
             let mut score = human.home.last_score;
             dragvalue().show(&mut score);
-            label("Home");
+            label(i18n.tr("ui.inspect.human.home"));
         });
         minrow(5.0, || {
             let mut score = human.work.as_ref().map(|x| x.last_score).unwrap_or(0.0);
             dragvalue().show(&mut score);
-            label("Work");
+            label(i18n.tr("ui.inspect.human.work"));
         });
 
         let market = sim.read::<Market>();

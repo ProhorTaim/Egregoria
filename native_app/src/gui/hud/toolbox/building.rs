@@ -24,9 +24,11 @@ use simulation::world_command::WorldCommand;
 
 use crate::gui::item_icon_yakui;
 use crate::gui::specialbuilding::{SpecialBuildKind, SpecialBuildingResource};
+use crate::i18n::I18n;
 use crate::uiworld::UiWorld;
 
 pub fn special_building_properties(uiw: &UiWorld) {
+    let i18n = uiw.read::<I18n>();
     let mut state = uiw.write::<SpecialBuildingResource>();
     let icons = uiw.read::<BuildingIcons>();
 
@@ -81,11 +83,21 @@ pub fn special_building_properties(uiw: &UiWorld) {
                                                     mincolumn(3.0, || {
                                                         titlec(
                                                             on_secondary_container(),
-                                                            &descr.label,
+                                                            i18n.proto_label(
+                                                                "goods_company",
+                                                                &descr.name,
+                                                                &descr.label,
+                                                            ),
                                                         );
                                                         textc(
                                                             on_secondary_container(),
-                                                            format!("workers: {}", descr.n_workers),
+                                                            i18n.tr_args(
+                                                                "ui.building.workers",
+                                                                &[(
+                                                                    "value",
+                                                                    format!("{}", descr.n_workers),
+                                                                )],
+                                                            ),
                                                         );
 
                                                         if let Some(ref recipe) = descr.recipe {
@@ -93,7 +105,9 @@ pub fn special_building_properties(uiw: &UiWorld) {
                                                             if !recipe.consumption.is_empty() {
                                                                 textc(
                                                                     on_secondary_container(),
-                                                                    "consumption:",
+                                                                    i18n
+                                                                        .tr("ui.building.consumption")
+                                                                        .to_string(),
                                                                 );
                                                                 for item in &recipe.consumption {
                                                                     item_icon_yakui(
@@ -107,7 +121,9 @@ pub fn special_building_properties(uiw: &UiWorld) {
                                                             if !recipe.production.is_empty() {
                                                                 textc(
                                                                     on_secondary_container(),
-                                                                    "production:",
+                                                                    i18n
+                                                                        .tr("ui.building.production")
+                                                                        .to_string(),
                                                                 );
                                                                 for item in &recipe.production {
                                                                     item_icon_yakui(
@@ -120,16 +136,22 @@ pub fn special_building_properties(uiw: &UiWorld) {
                                                             }
                                                             textc(
                                                                 on_secondary_container(),
-                                                                format!(
-                                                                    "time: {}",
-                                                                    recipe.duration
+                                                                i18n.tr_args(
+                                                                    "ui.building.time",
+                                                                    &[(
+                                                                        "value",
+                                                                        format!("{}", recipe.duration),
+                                                                    )],
                                                                 ),
                                                             );
                                                             textc(
                                                                 on_secondary_container(),
-                                                                format!(
-                                                                    "storage multiplier: {}",
-                                                                    recipe.storage_multiplier
+                                                                i18n.tr_args(
+                                                                    "ui.building.storage_multiplier",
+                                                                    &[(
+                                                                        "value",
+                                                                        format!("{}", recipe.storage_multiplier),
+                                                                    )],
                                                                 ),
                                                             );
                                                         }
@@ -138,14 +160,20 @@ pub fn special_building_properties(uiw: &UiWorld) {
                                                             fixed_spacer((0.0, 10.0));
                                                             textc(
                                                                 on_secondary_container(),
-                                                                format!("Power: {}", p),
+                                                                i18n.tr_args(
+                                                                    "ui.building.power",
+                                                                    &[("value", format!("{}", p))],
+                                                                ),
                                                             );
                                                         }
                                                         if let Some(p) = descr.power_production {
                                                             fixed_spacer((0.0, 10.0));
                                                             textc(
                                                                 on_secondary_container(),
-                                                                format!("Power production: {}", p),
+                                                                i18n.tr_args(
+                                                                    "ui.building.power_production",
+                                                                    &[("value", format!("{}", p))],
+                                                                ),
                                                             );
                                                         }
                                                     });

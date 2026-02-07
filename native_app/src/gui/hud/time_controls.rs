@@ -13,11 +13,13 @@ use simulation::Simulation;
 
 use crate::gui::windows::settings::Settings;
 use crate::gui::GuiState;
+use crate::i18n::I18n;
 use crate::inputmap::{InputAction, InputMap};
 use crate::uiworld::UiWorld;
 
 pub fn time_controls(uiworld: &UiWorld, sim: &Simulation) {
     profiling::scope!("hud::time_controls");
+    let i18n = uiworld.read::<I18n>();
     let time = sim.read::<GameTime>().daytime;
     let warp = &mut uiworld.write::<Settings>().time_warp;
     let mut gui = uiworld.write::<GuiState>();
@@ -50,7 +52,11 @@ pub fn time_controls(uiworld: &UiWorld, sim: &Simulation) {
     let time_text = || {
         padx(5.0, || {
             row(|| {
-                monospace(on_secondary_container(), format!("Day {}", time.day));
+                let day_label = i18n.tr_args(
+                    "ui.time.day",
+                    &[("value", format!("{}", time.day))],
+                );
+                monospace(on_secondary_container(), day_label);
                 spacer(1);
                 monospace(
                     on_secondary_container(),

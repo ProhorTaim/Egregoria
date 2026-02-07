@@ -11,6 +11,7 @@ use std::path::PathBuf;
 use yakui::widgets::Pad;
 use yakui::{Color, Vec2};
 
+use crate::i18n::I18n;
 pub struct LoadState {
     curpath: Option<PathBuf>,
     load_fail: String,
@@ -30,8 +31,9 @@ impl Default for LoadState {
 /// Load window
 /// Allows to load a replay from disk and play it
 pub fn load(uiw: &UiWorld, _: &Simulation, opened: &mut bool) {
+    let i18n = uiw.read::<I18n>();
     Window {
-        title: "Load".into(),
+        title: i18n.tr("ui.load.title").into(),
         pad: Pad::all(10.0),
         radius: 10.0,
         opened,
@@ -40,12 +42,12 @@ pub fn load(uiw: &UiWorld, _: &Simulation, opened: &mut bool) {
     .show(|| {
         let mut state = uiw.write::<LoadState>();
 
-        if button_primary("New Game").show().clicked {
+        if button_primary(i18n.tr("ui.load.new_game")).show().clicked {
             uiw.write::<SaveLoadState>().please_load_sim = Some(Simulation::new(true));
         }
 
         if state.has_save {
-            if button_primary("Load world/world_replay.json")
+            if button_primary(i18n.tr("ui.load.load_world"))
                 .show()
                 .clicked
             {
@@ -59,13 +61,13 @@ pub fn load(uiw: &UiWorld, _: &Simulation, opened: &mut bool) {
                     uiw.write::<SaveLoadState>().please_load = Some(loader);
                     uiw.write::<SaveLoadState>().please_load_sim = Some(sim);
                 } else {
-                    state.load_fail = "Failed to load replay".to_string();
+                    state.load_fail = i18n.tr("ui.load.failed").to_string();
                 }
             }
         } else {
             textc(
                 on_secondary_container(),
-                "No replay found in world/world_replay.json",
+                i18n.tr("ui.load.no_replay").to_string(),
             );
         }
 
@@ -80,7 +82,13 @@ pub fn load(uiw: &UiWorld, _: &Simulation, opened: &mut bool) {
             .show_children(|| {
                 textc(
                     on_secondary_container(),
-                    format!("Loading replay: {ticks_done}/{ticks_total}"),
+                    i18n.tr_args(
+                        "ui.load.loading_replay",
+                        &[
+                            ("done", format!("{ticks_done}")),
+                            ("total", format!("{ticks_total}")),
+                        ],
+                    ),
                 );
             });
 

@@ -4,9 +4,11 @@ use yakui::widgets::List;
 use yakui::{button, divider, label, CrossAxisAlignment, MainAxisAlignment};
 
 use crate::gui::addtrain::TrainSpawnResource;
+use crate::i18n::I18n;
 use crate::uiworld::UiWorld;
 
 pub fn train_properties(uiw: &UiWorld) {
+    let i18n = uiw.read::<I18n>();
     let mut state = uiw.write::<TrainSpawnResource>();
 
     padxy(0.0, 0.0, || {
@@ -16,13 +18,22 @@ pub fn train_properties(uiw: &UiWorld) {
         l.item_spacing = 10.0;
         l.show(|| {
             mincolumn(0.1, || {
-                if button("remove train").clicked {
+                if button(i18n.tr("ui.train.remove")).clicked {
                     state.wagons.clear();
                     state.set_zero();
                 }
-                label(format!("Acceleration: {:.1} m/s^2", state.acceleration));
-                label(format!("Deceleration: {:.1} m/s^2", state.deceleration));
-                label(format!("Total Lenght: {} m", state.total_lenght.ceil()));
+                label(i18n.tr_args(
+                    "ui.train.acceleration",
+                    &[("value", format!("{:.1}", state.acceleration))],
+                ));
+                label(i18n.tr_args(
+                    "ui.train.deceleration",
+                    &[("value", format!("{:.1}", state.deceleration))],
+                ));
+                label(i18n.tr_args(
+                    "ui.train.total_length",
+                    &[("value", format!("{}", state.total_lenght.ceil()))],
+                ));
             });
 
             mincolumn(0.5, || {
@@ -34,7 +45,9 @@ pub fn train_properties(uiw: &UiWorld) {
                         .map(|id| RollingStockID::prototype(*id))
                         .enumerate()
                     {
-                        if button(rs.label.clone()).clicked {
+                        let label =
+                            i18n.proto_label("rolling_stock", &rs.name, &rs.label);
+                        if button(label).clicked {
                             remove = Some(i);
                         }
                     }
@@ -48,7 +61,12 @@ pub fn train_properties(uiw: &UiWorld) {
 
                 minrow(0.0, || {
                     for rolling_stock in prototypes_iter::<RollingStockPrototype>() {
-                        let resp = button(rolling_stock.label.clone());
+                        let label = i18n.proto_label(
+                            "rolling_stock",
+                            &rolling_stock.name,
+                            &rolling_stock.label,
+                        );
+                        let resp = button(label);
                         if resp.clicked {
                             state.wagons.push(rolling_stock.id);
                             state.calculate();

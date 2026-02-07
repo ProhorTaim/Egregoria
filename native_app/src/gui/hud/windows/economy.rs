@@ -19,6 +19,7 @@ use simulation::economy::{
 };
 use simulation::Simulation;
 
+use crate::i18n::I18n;
 use crate::uiworld::UiWorld;
 
 #[derive(Copy, Clone, Default, PartialEq, Eq)]
@@ -46,8 +47,9 @@ pub struct EconomyState {
 /// Economy window
 /// Shows the economy stats
 pub fn economy(uiw: &UiWorld, sim: &Simulation, opened: &mut bool) {
+    let i18n = uiw.read::<I18n>();
     Window {
-        title: "Economy".into(),
+        title: i18n.tr("ui.economy.title").into(),
         pad: Pad::all(10.0),
         radius: 10.0,
         opened,
@@ -58,13 +60,13 @@ pub fn economy(uiw: &UiWorld, sim: &Simulation, opened: &mut bool) {
         let ecostats = sim.read::<EcoStats>();
         pady(10.0, || {
             let tabs = &[
-                ("Import/Exports", EconomyTab::ImportExports),
-                ("Internal Trade", EconomyTab::InternalTrade),
-                ("Market Prices", EconomyTab::MarketPrices),
+                ("ui.economy.tab.import_exports", EconomyTab::ImportExports),
+                ("ui.economy.tab.internal_trade", EconomyTab::InternalTrade),
+                ("ui.economy.tab.market_prices", EconomyTab::MarketPrices),
             ];
 
             for (label, tab) in tabs {
-                if selectable_label_primary(state.tab == *tab, label).clicked {
+                if selectable_label_primary(state.tab == *tab, i18n.tr(label)).clicked {
                     state.tab = *tab;
                 }
             }
@@ -82,13 +84,19 @@ pub fn economy(uiw: &UiWorld, sim: &Simulation, opened: &mut bool) {
                 }
 
                 if state.tab == EconomyTab::ImportExports {
-                    if selectable_label_primary(state.hist_type == HistoryType::Money, "Money")
-                        .clicked
+                    if selectable_label_primary(
+                        state.hist_type == HistoryType::Money,
+                        i18n.tr("ui.economy.money"),
+                    )
+                    .clicked
                     {
                         state.hist_type = HistoryType::Money;
                     }
-                    if selectable_label_primary(state.hist_type == HistoryType::Items, "Items")
-                        .clicked
+                    if selectable_label_primary(
+                        state.hist_type == HistoryType::Items,
+                        i18n.tr("ui.economy.items"),
+                    )
+                    .clicked
                     {
                         state.hist_type = HistoryType::Items;
                     }
@@ -289,7 +297,10 @@ pub fn economy(uiw: &UiWorld, sim: &Simulation, opened: &mut bool) {
                                 if matches!(hist_type, HistoryType::Money) {
                                     textc(
                                         on_primary_container(),
-                                        format!("Total: {}$", overall_total),
+                                        i18n.tr_args(
+                                            "ui.economy.total_money",
+                                            &[("value", format!("{}", overall_total))],
+                                        ),
                                     );
                                 }
                             });
@@ -302,8 +313,14 @@ pub fn economy(uiw: &UiWorld, sim: &Simulation, opened: &mut bool) {
         match tab {
             EconomyTab::ImportExports => {
                 let (label_left, label_right) = match hist_type {
-                    HistoryType::Items => ("Imports", "Exports"),
-                    HistoryType::Money => ("Expenses", "Income"),
+                    HistoryType::Items => (
+                        i18n.tr("ui.economy.imports"),
+                        i18n.tr("ui.economy.exports"),
+                    ),
+                    HistoryType::Money => (
+                        i18n.tr("ui.economy.expenses"),
+                        i18n.tr("ui.economy.income"),
+                    ),
                 };
 
                 constrained_viewport(|| {

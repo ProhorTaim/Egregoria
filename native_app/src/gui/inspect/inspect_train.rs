@@ -1,10 +1,12 @@
 use crate::gui::inspect::follow_button;
+use crate::i18n::I18n;
 use crate::uiworld::UiWorld;
 use goryak::{on_secondary_container, textc, Window};
 use simulation::{Simulation, TrainID};
 use yakui::widgets::Pad;
 
 pub fn inspect_train(uiworld: &UiWorld, sim: &Simulation, id: TrainID) -> bool {
+    let i18n = uiworld.read::<I18n>();
     let Some(t) = sim.get(id) else {
         return false;
     };
@@ -12,7 +14,7 @@ pub fn inspect_train(uiworld: &UiWorld, sim: &Simulation, id: TrainID) -> bool {
     let mut is_open = true;
 
     Window {
-        title: "Train".into(),
+        title: i18n.tr("ui.inspect.train").into(),
         pad: Pad::all(10.0),
         radius: 10.0,
         opened: &mut is_open,
@@ -25,7 +27,10 @@ pub fn inspect_train(uiworld: &UiWorld, sim: &Simulation, id: TrainID) -> bool {
 
         textc(
             on_secondary_container(),
-            format!("Going at {:.0}km/h", t.speed.0),
+            i18n.tr_args(
+                "ui.inspect.speed_kmh",
+                &[("value", format!("{:.0}", t.speed.0))],
+            ),
         );
 
         follow_button(uiworld, id);

@@ -20,6 +20,7 @@ use crate::gui::{
     TimeAlways, Tool,
 };
 use crate::inputmap::{Bindings, InputMap};
+use crate::i18n::I18n;
 use crate::network::NetworkState;
 use crate::rendering::immediate::{ImmediateDraw, ImmediateSound};
 use crate::uiworld::{ReceivedCommands, SaveLoadState, UiWorld};
@@ -37,6 +38,7 @@ pub fn init() {
     register_resource::<crate::gui::windows::network::NetworkConnectionInfo>("netinfo");
     register_resource::<LotBrushResource>("lot_brush");
     register_resource::<Bindings>("bindings");
+    register_resource_noserialize::<I18n>();
 
     register_resource_noserialize::<GuiState>();
     register_resource_noserialize::<TerraformingResource>();

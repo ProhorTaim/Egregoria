@@ -1,4 +1,3 @@
-use std::borrow::Cow;
 use std::collections::BTreeMap;
 
 use serde::{Deserialize, Serialize};
@@ -12,6 +11,7 @@ use goryak::{
 };
 use simulation::Simulation;
 
+use crate::i18n::I18n;
 use crate::network::NetworkState;
 use crate::uiworld::UiWorld;
 
@@ -29,15 +29,16 @@ pub struct NetworkConnectionInfo {
     hashes_tick: u64,
 }
 
-fn label(x: impl Into<Cow<'static, str>>) {
-    textc(on_secondary_container(), x);
+fn label(x: impl Into<String>) {
+    textc(on_secondary_container(), x.into());
 }
 
 /// Network window
 /// Allows to connect to a server or start a server
 pub fn network(uiworld: &UiWorld, sim: &Simulation, opened: &mut bool) {
+    let i18n = uiworld.read::<I18n>();
     Window {
-        title: "Network".into(),
+        title: i18n.tr("ui.network.title").into(),
         opened,
         pad: Pad::all(10.0),
         radius: 10.0,
@@ -55,14 +56,14 @@ pub fn network(uiworld: &UiWorld, sim: &Simulation, opened: &mut bool) {
                     divider(outline(), 5.0, 1.0);
                 }
 
-                text_edit(200.0, &mut info.name, "Name");
+                text_edit(200.0, &mut info.name, i18n.tr("ui.network.name"));
 
                 if info.name.is_empty() {
-                    label("please enter your name");
+                    label(i18n.tr("ui.network.enter_name"));
                     return;
                 }
 
-                if button_primary("Start server").show().clicked {
+                if button_primary(i18n.tr("ui.network.start_server")).show().clicked {
                     if let Some(server) = crate::network::start_server(&mut info, sim) {
                         *state = NetworkState::Server(server);
                     }
@@ -70,9 +71,9 @@ pub fn network(uiworld: &UiWorld, sim: &Simulation, opened: &mut bool) {
 
                 divider(outline(), 5.0, 1.0);
 
-                text_edit(200.0, &mut info.ip, "IP");
+                text_edit(200.0, &mut info.ip, i18n.tr("ui.network.ip"));
 
-                if button_primary("Connect").show().clicked {
+                if button_primary(i18n.tr("ui.network.connect")).show().clicked {
                     if let Some(c) = crate::network::start_client(&mut info) {
                         *state = NetworkState::Client(c);
                     }
@@ -80,22 +81,22 @@ pub fn network(uiworld: &UiWorld, sim: &Simulation, opened: &mut bool) {
             }
             NetworkState::Client(ref client) => {
                 label(client.lock().unwrap().describe());
-                show_hashes(sim, &mut info);
+                show_hashes(sim, &mut info, &i18n);
             }
             NetworkState::Server(ref server) => {
-                label("Running server");
+                label(i18n.tr("ui.network.running_server"));
                 label(server.lock().unwrap().describe());
-                show_hashes(sim, &mut info);
+                show_hashes(sim, &mut info, &i18n);
             }
         }
     });
 }
 
-fn show_hashes(sim: &Simulation, info: &mut NetworkConnectionInfo) {
+fn show_hashes(sim: &Simulation, info: &mut NetworkConnectionInfo, i18n: &I18n) {
     checkbox_value(
         &mut info.show_hashes,
         on_secondary_container(),
-        "show hashes",
+        i18n.tr("ui.network.show_hashes").to_string(),
     );
     if !info.show_hashes {
         return;
@@ -106,7 +107,10 @@ fn show_hashes(sim: &Simulation, info: &mut NetworkConnectionInfo) {
         info.hashes_tick = sim.get_tick();
     }
 
-    label(format!("hashes for tick {}", info.hashes_tick));
+    label(i18n.tr_args(
+        "ui.network.hashes_for_tick",
+        &[("value", format!("{}", info.hashes_tick))],
+    ));
     for (name, hash) in &info.hashes {
         label(format!("{name}: {hash}"));
     }

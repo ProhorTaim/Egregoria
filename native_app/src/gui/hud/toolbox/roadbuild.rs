@@ -10,9 +10,11 @@ use simulation::map::LanePatternBuilder;
 use crate::gui::hud::toolbox::updown_value;
 use crate::gui::roadbuild::{HeightReference, RoadBuildResource, Snapping};
 use crate::gui::textures::UiTextures;
+use crate::i18n::I18n;
 use crate::uiworld::UiWorld;
 
 pub fn roadbuild_properties(uiw: &UiWorld) {
+    let i18n = uiw.read::<I18n>();
     let mut state = uiw.write::<RoadBuildResource>();
 
     padxy(0.0, 10.0, || {
@@ -38,7 +40,7 @@ pub fn roadbuild_properties(uiw: &UiWorld) {
                         snapping_none.0,
                         snapping_none.1,
                         primary(),
-                        "no snapping",
+                        i18n.tr("ui.roadbuild.snap.none").to_string(),
                     )
                     .clicked
                     {
@@ -50,7 +52,7 @@ pub fn roadbuild_properties(uiw: &UiWorld) {
                         snapping_grid.0,
                         snapping_grid.1,
                         primary(),
-                        "snap to grid",
+                        i18n.tr("ui.roadbuild.snap.grid").to_string(),
                     )
                     .clicked
                     {
@@ -62,7 +64,7 @@ pub fn roadbuild_properties(uiw: &UiWorld) {
                         snapping_angel.0,
                         snapping_angel.1,
                         primary(),
-                        "snap to angle",
+                        i18n.tr("ui.roadbuild.snap.angle").to_string(),
                     )
                     .clicked
                     {
@@ -84,7 +86,7 @@ pub fn roadbuild_properties(uiw: &UiWorld) {
                         hos_ground.0,
                         hos_ground.1,
                         primary(),
-                        "Relative to ground",
+                        i18n.tr("ui.roadbuild.height.ground").to_string(),
                     )
                     .clicked
                     {
@@ -96,7 +98,7 @@ pub fn roadbuild_properties(uiw: &UiWorld) {
                         hos_start.0,
                         hos_start.1,
                         primary(),
-                        "Relative to start",
+                        i18n.tr("ui.roadbuild.height.start").to_string(),
                     )
                     .clicked
                     {
@@ -108,7 +110,7 @@ pub fn roadbuild_properties(uiw: &UiWorld) {
                         hos_incline.0,
                         hos_incline.1,
                         primary(),
-                        "Maximum incline",
+                        i18n.tr("ui.roadbuild.height.max_incline").to_string(),
                     )
                     .clicked
                     {
@@ -120,7 +122,7 @@ pub fn roadbuild_properties(uiw: &UiWorld) {
                         hos_decline.0,
                         hos_decline.1,
                         primary(),
-                        "Maximum decline",
+                        i18n.tr("ui.roadbuild.height.max_decline").to_string(),
                     )
                     .clicked
                     {
@@ -133,20 +135,20 @@ pub fn roadbuild_properties(uiw: &UiWorld) {
 
             // image name, label, builder
             let builders: &[(&str, &str, LanePatternBuilder)] = &[
-                ("roadtypes_street", "Street", LanePatternBuilder::new()),
+                ("roadtypes_street", "ui.roadtype.street", LanePatternBuilder::new()),
                 (
                     "roadtypes_street_1way",
-                    "Street one-way",
+                    "ui.roadtype.street_one_way",
                     LanePatternBuilder::new().one_way(true),
                 ),
                 (
                     "roadtypes_avenue",
-                    "Avenue",
+                    "ui.roadtype.avenue",
                     LanePatternBuilder::new().n_lanes(2).speed_limit(13.0),
                 ),
                 (
                     "roadtypes_avenue_1way",
-                    "Avenue one-way",
+                    "ui.roadtype.avenue_one_way",
                     LanePatternBuilder::new()
                         .n_lanes(2)
                         .one_way(true)
@@ -154,7 +156,7 @@ pub fn roadbuild_properties(uiw: &UiWorld) {
                 ),
                 (
                     "roadtypes_drive",
-                    "Drive",
+                    "ui.roadtype.drive",
                     LanePatternBuilder::new()
                         .parking(false)
                         .sidewalks(false)
@@ -162,7 +164,7 @@ pub fn roadbuild_properties(uiw: &UiWorld) {
                 ),
                 (
                     "roadtypes_drive_1way",
-                    "Drive one-way",
+                    "ui.roadtype.drive_one_way",
                     LanePatternBuilder::new()
                         .parking(false)
                         .sidewalks(false)
@@ -171,7 +173,7 @@ pub fn roadbuild_properties(uiw: &UiWorld) {
                 ),
                 (
                     "roadtypes_highway",
-                    "Highway",
+                    "ui.roadtype.highway",
                     LanePatternBuilder::new()
                         .n_lanes(3)
                         .speed_limit(25.0)
@@ -180,7 +182,7 @@ pub fn roadbuild_properties(uiw: &UiWorld) {
                 ),
                 (
                     "roadtypes_highway_1way",
-                    "Highway one-way",
+                    "ui.roadtype.highway_one_way",
                     LanePatternBuilder::new()
                         .n_lanes(3)
                         .speed_limit(25.0)
@@ -190,12 +192,12 @@ pub fn roadbuild_properties(uiw: &UiWorld) {
                 ),
                 (
                     "roadtypes_rail",
-                    "Rail",
+                    "ui.roadtype.rail",
                     LanePatternBuilder::new().rail(true),
                 ),
                 (
                     "roadtypes_rail_1way",
-                    "Rail one-way",
+                    "ui.roadtype.rail_one_way",
                     LanePatternBuilder::new().rail(true).one_way(true),
                 ),
             ];
@@ -217,7 +219,7 @@ pub fn roadbuild_properties(uiw: &UiWorld) {
                         default_col,
                         hover_col,
                         primary(),
-                        *label,
+                        i18n.tr(label).to_string(),
                     )
                     .clicked
                     {

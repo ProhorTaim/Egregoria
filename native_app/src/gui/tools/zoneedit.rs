@@ -1,5 +1,6 @@
 use crate::gui::{ErrorTooltip, InspectedBuilding, PotentialCommands};
 use crate::inputmap::{InputAction, InputMap};
+use crate::i18n::I18n;
 use crate::rendering::immediate::ImmediateDraw;
 use crate::uiworld::UiWorld;
 use geom::{Polygon, Vec2};
@@ -20,6 +21,7 @@ pub struct ZoneEditState {
 /// Allows to edit the zone of a building like a farm field or solarpanel field
 pub fn zoneedit(sim: &Simulation, uiworld: &UiWorld) {
     profiling::scope!("gui::zoneedit");
+    let i18n = uiworld.read::<I18n>();
     let mut inspected_b = uiworld.write::<InspectedBuilding>();
     let mut state = uiworld.write::<ZoneEditState>();
     let mut potentialcommand = uiworld.write::<PotentialCommands>();
@@ -68,11 +70,23 @@ pub fn zoneedit(sim: &Simulation, uiworld: &UiWorld) {
 
     const MAX_PERIMETER: f32 = 3000.0;
     if area > MAX_ZONE_AREA {
-        invalidmsg = format!("Area too big ({area} > {MAX_ZONE_AREA})");
+        invalidmsg = i18n.tr_args(
+            "ui.zoneedit.area_too_big",
+            &[
+                ("value", format!("{:.0}", area)),
+                ("max", format!("{:.0}", MAX_ZONE_AREA)),
+            ],
+        );
     } else if perimeter > MAX_PERIMETER {
-        invalidmsg = format!("Perimeter too big ({perimeter} > {MAX_PERIMETER})");
+        invalidmsg = i18n.tr_args(
+            "ui.zoneedit.perimeter_too_big",
+            &[
+                ("value", format!("{:.0}", perimeter)),
+                ("max", format!("{:.0}", MAX_PERIMETER)),
+            ],
+        );
     } else if !newpoly.contains(b.obb.center()) {
-        invalidmsg = String::from("Zone must be near the building");
+        invalidmsg = i18n.tr("ui.zoneedit.must_be_near").to_string();
     } else if let Some(v) = map
         .spatial_map()
         .query(
@@ -81,7 +95,10 @@ pub fn zoneedit(sim: &Simulation, uiworld: &UiWorld) {
         )
         .find(move |x| x != &ProjectKind::Building(bid))
     {
-        invalidmsg = format!("Zone intersects with {v:?}");
+        invalidmsg = i18n.tr_args(
+            "ui.zoneedit.intersects",
+            &[("value", format!("{v:?}"))],
+        );
     }
 
     let isvalid = invalidmsg.is_empty();
