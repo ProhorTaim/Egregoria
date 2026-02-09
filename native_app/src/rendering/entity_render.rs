@@ -9,12 +9,12 @@ use simulation::Simulation;
 pub struct InstancedRender {
     pub path_not_found: SpriteBatchBuilder<true>,
     pub rolling_stock: FastMap<RollingStockID, InstancedMeshBuilder<true>>,
-    pub cars: InstancedMeshBuilder<true>,
+    pub cars: Option<InstancedMeshBuilder<true>>,
     // pub locomotives: InstancedMeshBuilder<true>,
     // pub wagons_passenger: InstancedMeshBuilder<true>,
     // pub wagons_freight: InstancedMeshBuilder<true>,
-    pub trucks: InstancedMeshBuilder<true>,
-    pub pedestrians: InstancedMeshBuilder<true>,
+    pub trucks: Option<InstancedMeshBuilder<true>>,
+    pub pedestrians: Option<InstancedMeshBuilder<true>>,
 }
 
 impl InstancedRender {
@@ -40,7 +40,54 @@ impl InstancedRender {
                 rolling_stock.insert(id, InstancedMeshBuilder::new_ref(&mesh));
             });
 
-        let car = gfx.mesh("simple_car.glb".as_ref()).unwrap();
+        // Try to load optional models - if they all fail, we'll skip rendering them
+        let car = match gfx.mesh("simple_car.glb".as_ref()) {
+            Ok(m) => Some(m),
+            Err(e) => {
+                log::warn!("Failed to load car model: {:?}, continuing without it", e);
+                None
+            }
+        };
+
+        let truck = match gfx.mesh("truck.glb".as_ref()) {
+            Ok(m) => Some(m),
+            Err(e) => {
+                log::warn!("Failed to load truck model: {:?}, continuing without it", e);
+                None
+            }
+        };
+
+        let pedestrian = match gfx.mesh("pedestrian.glb".as_ref()) {
+            Ok(m) => Some(m),
+            Err(e) => {
+                log::warn!("Failed to load pedestrian model: {:?}, continuing without it", e);
+                None
+            }
+        };
+
+        // If we have at least one model, use it; otherwise create with None
+        let some_model = if let Some(m) = car.as_ref() {
+            Some(m)
+        } else if let Some(m) = truck.as_ref() {
+            Some(m)
+        } else if let Some(m) = pedestrian.as_ref() {
+            Some(m)
+        } else {
+            log::warn!("No vehicle models loaded! Vehicles will not be rendered.");
+            None
+        };
+
+        // Create InstancedMeshBuilders for loaded models, None for missing ones
+        let (cars_builder, trucks_builder, pedestrians_builder) = if let Some(fallback) = some_model {
+            (
+                car.as_ref().map(|m| InstancedMeshBuilder::new_ref(m)),
+                truck.as_ref().map(|m| InstancedMeshBuilder::new_ref(m)),
+                pedestrian.as_ref().map(|m| InstancedMeshBuilder::new_ref(m)),
+            )
+        } else {
+            (None, None, None)
+        };
+
         InstancedRender {
             path_not_found: SpriteBatchBuilder::new(
                 &gfx.texture("assets/sprites/path_not_found.png", "path_not_found"),
@@ -49,22 +96,24 @@ impl InstancedRender {
 
             rolling_stock,
 
-            cars: InstancedMeshBuilder::new_ref(&car),
-            // locomotives: InstancedMeshBuilder::new_ref(&gfx.mesh("train.glb".as_ref()).unwrap()),
-            // wagons_freight: InstancedMeshBuilder::new_ref(&gfx.mesh("wagon_freight.glb".as_ref()).unwrap()),
-            // wagons_passenger: InstancedMeshBuilder::new_ref(&gfx.mesh("wagon.glb".as_ref()).unwrap()),
-            trucks: InstancedMeshBuilder::new_ref(&gfx.mesh("truck.glb".as_ref()).unwrap()),
-            pedestrians: InstancedMeshBuilder::new_ref(
-                &gfx.mesh("pedestrian.glb".as_ref()).unwrap(),
-            ),
+            cars: cars_builder,
+            trucks: trucks_builder,
+            pedestrians: pedestrians_builder,
         }
     }
 
     pub fn render(&mut self, sim: &Simulation, fctx: &mut FrameContext<'_>) {
         profiling::scope!("entity_render::render");
-        self.cars.instances.clear();
-        self.trucks.instances.clear();
-        self.pedestrians.instances.clear();
+        if let Some(cars) = self.cars.as_mut() {
+            cars.instances.clear();
+        }
+        if let Some(trucks) = self.trucks.as_mut() {
+            trucks.instances.clear();
+        }
+        if let Some(pedestrians) = self.pedestrians.as_mut() {
+            pedestrians.instances.clear();
+        }
+        
         for v in sim.world().vehicles.values() {
             let trans = &v.trans;
             let instance = MeshInstance {
@@ -74,8 +123,16 @@ impl InstancedRender {
             };
 
             match v.vehicle.kind {
-                VehicleKind::Car => self.cars.instances.push(instance),
-                VehicleKind::Truck => self.trucks.instances.push(instance),
+                VehicleKind::Car => {
+                    if let Some(cars) = self.cars.as_mut() {
+                        cars.instances.push(instance)
+                    }
+                }
+                VehicleKind::Truck => {
+                    if let Some(trucks) = self.trucks.as_mut() {
+                        trucks.instances.push(instance)
+                    }
+                }
                 _ => {}
             }
         }
@@ -98,11 +155,13 @@ impl InstancedRender {
 
         for p in sim.world().humans.values() {
             if matches!(p.location, Location::Outside) {
-                self.pedestrians.instances.push(MeshInstance {
-                    pos: p.trans.pos.up(0.5 + 0.4 * p.pedestrian.walk_anim.cos()),
-                    dir: p.trans.dir.xy().z0(),
-                    tint: LinearColor::WHITE,
-                });
+                if let Some(pedestrians) = self.pedestrians.as_mut() {
+                    pedestrians.instances.push(MeshInstance {
+                        pos: p.trans.pos.up(0.5 + 0.4 * p.pedestrian.walk_anim.cos()),
+                        dir: p.trans.dir.xy().z0(),
+                        tint: LinearColor::WHITE,
+                    });
+                }
             }
         }
 
@@ -130,14 +189,20 @@ impl InstancedRender {
         if let Some(x) = self.path_not_found.build(fctx.gfx) {
             fctx.objs.push(Box::new(x));
         }
-        if let Some(x) = self.cars.build(fctx.gfx) {
-            fctx.objs.push(Box::new(x));
+        if let Some(cars) = self.cars.as_mut() {
+            if let Some(x) = cars.build(fctx.gfx) {
+                fctx.objs.push(Box::new(x));
+            }
         }
-        if let Some(x) = self.trucks.build(fctx.gfx) {
-            fctx.objs.push(Box::new(x));
+        if let Some(trucks) = self.trucks.as_mut() {
+            if let Some(x) = trucks.build(fctx.gfx) {
+                fctx.objs.push(Box::new(x));
+            }
         }
-        if let Some(x) = self.pedestrians.build(fctx.gfx) {
-            fctx.objs.push(Box::new(x));
+        if let Some(pedestrians) = self.pedestrians.as_mut() {
+            if let Some(x) = pedestrians.build(fctx.gfx) {
+                fctx.objs.push(Box::new(x));
+            }
         }
 
         self.rolling_stock.iter_mut().for_each(|(_, imb)| {

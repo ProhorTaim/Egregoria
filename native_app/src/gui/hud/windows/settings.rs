@@ -124,9 +124,9 @@ impl Default for SettingsState {
 /// Settings window
 /// This window is used to change the settings of the game
 pub fn settings(uiw: &UiWorld, _: &Simulation, opened: &mut bool) {
-    let i18n = uiw.read::<I18n>();
+    log::debug!("Rendering settings window, opened={}", opened);
     Window {
-        title: i18n.tr("ui.settings.title").into(),
+        title: uiw.read::<I18n>().tr("ui.settings.title").into(),
         pad: Pad::all(10.0),
         radius: 10.0,
         opened,
@@ -143,6 +143,7 @@ pub fn settings(uiw: &UiWorld, _: &Simulation, opened: &mut bool) {
                 let mut settings = uiw.write::<Settings>();
                 let mut state = uiw.write::<SettingsState>();
                 let before = *settings;
+                let i18n = uiw.read::<I18n>();
 
                 textc(
                     on_secondary_container(),
@@ -157,9 +158,9 @@ pub fn settings(uiw: &UiWorld, _: &Simulation, opened: &mut bool) {
                     if combo_box(
                         &mut id,
                         &[
-                            i18n.tr("ui.settings.autosave.never"),
-                            i18n.tr("ui.settings.autosave.one_min"),
-                            i18n.tr("ui.settings.autosave.five_min"),
+                            &i18n.tr("ui.settings.autosave.never"),
+                            &i18n.tr("ui.settings.autosave.one_min"),
+                            &i18n.tr("ui.settings.autosave.five_min"),
                         ],
                         200.0,
                     ) {
@@ -276,11 +277,11 @@ pub fn settings(uiw: &UiWorld, _: &Simulation, opened: &mut bool) {
                     if combo_box(
                         &mut id,
                         &[
-                            i18n.tr("ui.settings.shadow.none"),
-                            i18n.tr("ui.settings.shadow.low"),
-                            i18n.tr("ui.settings.shadow.medium"),
-                            i18n.tr("ui.settings.shadow.high"),
-                            i18n.tr("ui.settings.shadow.ultra"),
+                            &i18n.tr("ui.settings.shadow.none"),
+                            &i18n.tr("ui.settings.shadow.low"),
+                            &i18n.tr("ui.settings.shadow.medium"),
+                            &i18n.tr("ui.settings.shadow.high"),
+                            &i18n.tr("ui.settings.shadow.ultra"),
                         ],
                         200.0,
                     ) {
@@ -431,13 +432,21 @@ pub fn settings(uiw: &UiWorld, _: &Simulation, opened: &mut bool) {
                 );
                 minrow(5.0, || {
                     let mut id = settings.language as u8 as usize;
+                    let old_id = id;
                     if combo_box(
                         &mut id,
                         &[Language::English.as_ref(), Language::Russian.as_ref()],
                         200.0,
                     ) {
-                        settings.language = Language::from(id as u8);
+                        let new_lang = Language::from(id as u8);
+                        log::warn!("🌍 Language changed: {} -> {} (code: {})", old_id, id, new_lang.code());
+                        settings.language = new_lang;
+                        let current_lang = uiw.read::<I18n>().language();
+                        log::warn!("Before: I18n current language = {}", current_lang.code());
+                        drop(i18n); // release the read lock
                         uiw.write::<I18n>().set_language(settings.language);
+                        let updated_lang = uiw.read::<I18n>().language();
+                        log::warn!("After: I18n current language = {}", updated_lang.code());
                     }
                 });
 

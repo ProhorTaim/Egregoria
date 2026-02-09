@@ -72,7 +72,7 @@ fn save_window(gui: &mut GuiState, uiw: &UiWorld) {
         ExitState::ExitAsk | ExitState::Saving => {
             let mut opened = true;
             Window {
-                title: i18n.tr("ui.menu.exit_menu").into(),
+                title: i18n.tr("ui.menu.exit_menu").to_string().into(),
                 pad: Pad::all(15.0),
                 radius: 10.0,
                 opened: &mut opened,

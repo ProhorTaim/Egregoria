@@ -242,33 +242,48 @@ impl ImmediateDraw {
                     );
                 }
                 OrderKind::TexturedOBB { obb, ref path, z } => {
-                    let Ok(tex) = ctx.gfx.try_texture(path, "some immediate obb") else {
-                        continue;
-                    };
-                    ctx.objs.push(Box::new(
-                        SpriteBatchBuilder::<false>::new(&tex, ctx.gfx)
-                            .push(obb.center().z(z), obb.axis()[0].z0(), *color, (1.0, 1.0))
-                            .build(ctx.gfx)
-                            .unwrap(),
-                    ));
+                    match ctx.gfx.try_texture(path, "some immediate obb") {
+                        Ok(tex) => {
+                            if let Some(sprite_batch) = SpriteBatchBuilder::<false>::new(&tex, ctx.gfx)
+                                .push(obb.center().z(z), obb.axis()[0].z0(), *color, (1.0, 1.0))
+                                .build(ctx.gfx)
+                            {
+                                ctx.objs.push(Box::new(sprite_batch));
+                            } else {
+                                log::warn!("Failed to build sprite batch for {}", path);
+                            }
+                        }
+                        Err(e) => {
+                            log::warn!("Failed to load texture {} for immediate OBB: {}", path, e);
+                            continue;
+                        }
+                    }
                 }
                 OrderKind::Mesh { ref path, pos, dir } => {
-                    let m = self.mesh_cache.get_mut(path.as_ref());
-                    let i = if let Some(x) = m {
-                        x
-                    } else {
-                        self.mesh_cache.insert(
-                            path.to_path_buf(),
-                            InstancedMeshBuilder::new_ref(&ctx.gfx.mesh(path).unwrap()),
-                        );
-                        self.mesh_cache.get_mut(path.as_ref()).unwrap()
-                    };
+                    match ctx.gfx.mesh(path) {
+                        Ok(mesh) => {
+                            let m = self.mesh_cache.get_mut(path.as_ref());
+                            let i = if let Some(x) = m {
+                                x
+                            } else {
+                                self.mesh_cache.insert(
+                                    path.to_path_buf(),
+                                    InstancedMeshBuilder::new_ref(&mesh),
+                                );
+                                self.mesh_cache.get_mut(path.as_ref()).unwrap()
+                            };
 
-                    i.instances.push(MeshInstance {
-                        pos,
-                        dir,
-                        tint: color.a(1.0),
-                    });
+                            i.instances.push(MeshInstance {
+                                pos,
+                                dir,
+                                tint: color.a(1.0),
+                            });
+                        }
+                        Err(e) => {
+                            log::warn!("Failed to load mesh {}: {:?}", path.display(), e);
+                            continue;
+                        }
+                    }
                 }
             }
         }

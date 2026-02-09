@@ -73,7 +73,7 @@ impl<const PERSISTENT: bool> MeshBuilder<PERSISTENT> {
         }
     }
 
-    pub fn mk_tess(&mut self) -> Tesselator {
+    pub fn mk_tess(&mut self) -> Tesselator<'_> {
         Tesselator::new(&mut self.vertices, &mut self.indices, None, 1.0)
     }
 

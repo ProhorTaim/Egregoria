@@ -20,6 +20,7 @@ use crate::gui::toolbox::building;
 use crate::gui::windows::settings::{manage_settings, Settings};
 use crate::gui::UiTextures;
 use crate::gui::{render_newgui, ExitState, GuiState, TimeAlways, Tool};
+use crate::i18n::Language;
 use crate::inputmap::{Bindings, InputAction, InputMap};
 use crate::rendering::{InstancedRender, MapRenderOptions, MapRenderer, OrbitCamera};
 use crate::uiworld::{SaveLoadState, UiWorld};
@@ -75,18 +76,29 @@ impl engine::framework::State for State {
 
         {
             let s = uiworld.read::<Settings>();
+            let lang = s.language;
+            log::info!("Loaded Settings from uiworld - language field value: {:?} (code: {})", lang as u8, lang.code());
             manage_settings(ctx, &s);
+            drop(s);
+            uiworld.write::<crate::i18n::I18n>().set_language(lang);
+            log::info!("Game initialized with language: {}", lang.code());
         }
 
         defer!(log::info!("finished init of game loop"));
         building::do_icons(ctx, &uiworld);
 
+        let instanced_renderer = InstancedRender::new(&mut ctx.gfx);
+
+        let map_renderer = MapRenderer::new(&mut ctx.gfx, &sim);
+
+        let all_audio = GameAudio::new(&mut ctx.audio);
+
         let me = Self {
             uiw: uiworld,
             game_schedule,
-            instanced_renderer: InstancedRender::new(&mut ctx.gfx),
-            map_renderer: MapRenderer::new(&mut ctx.gfx, &sim),
-            all_audio: GameAudio::new(&mut ctx.audio),
+            instanced_renderer,
+            map_renderer,
+            all_audio,
             sim: Arc::new(RwLock::new(sim)),
             immediate_renderer: MeshBuilder::new(ctx.gfx.tess_material),
         };

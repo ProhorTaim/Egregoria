@@ -16,12 +16,21 @@ const DOWNSCALE_PASSES: u32 = 2;
 /// 1. Downsample the image to half resolution using bi-linear filtering
 /// 2. Downsample then upsample using the equations from the paper
 /// 3. Sample from the UI directly (bi-linearly filtered)
-pub fn gen_ui_blur(gfx: &GfxContext, enc: &mut CommandEncoder, frame: &TextureView) {
+pub fn gen_ui_blur(gfx: &GfxContext, enc: &mut CommandEncoder, swapchain_view: &TextureView) {
     profiling::scope!("ui blur pass");
 
     let tex = &gfx.fbos.ui_blur;
 
-    initial_downscale(gfx, enc, frame);
+    // Choose sample source: use intermediate copy if available, otherwise use the swapchain view.
+    let mut maybe_owned_view: Option<TextureView> = None;
+    let src_view: &TextureView = if let Some(temp) = &gfx.current_frame_copy {
+        maybe_owned_view = Some(temp.texture.create_view(&wgpu::TextureViewDescriptor::default()));
+        maybe_owned_view.as_ref().unwrap()
+    } else {
+        swapchain_view
+    };
+
+    initial_downscale(gfx, enc, src_view);
 
     //do_pass(
     //    gfx,

@@ -49,7 +49,7 @@ pub struct EconomyState {
 pub fn economy(uiw: &UiWorld, sim: &Simulation, opened: &mut bool) {
     let i18n = uiw.read::<I18n>();
     Window {
-        title: i18n.tr("ui.economy.title").into(),
+        title: i18n.tr("ui.economy.title").to_string().into(),
         pad: Pad::all(10.0),
         radius: 10.0,
         opened,
@@ -66,7 +66,7 @@ pub fn economy(uiw: &UiWorld, sim: &Simulation, opened: &mut bool) {
             ];
 
             for (label, tab) in tabs {
-                if selectable_label_primary(state.tab == *tab, i18n.tr(label)).clicked {
+                if selectable_label_primary(state.tab == *tab, &i18n.tr(label)).clicked {
                     state.tab = *tab;
                 }
             }
@@ -86,7 +86,7 @@ pub fn economy(uiw: &UiWorld, sim: &Simulation, opened: &mut bool) {
                 if state.tab == EconomyTab::ImportExports {
                     if selectable_label_primary(
                         state.hist_type == HistoryType::Money,
-                        i18n.tr("ui.economy.money"),
+                        &i18n.tr("ui.economy.money"),
                     )
                     .clicked
                     {
@@ -94,7 +94,7 @@ pub fn economy(uiw: &UiWorld, sim: &Simulation, opened: &mut bool) {
                     }
                     if selectable_label_primary(
                         state.hist_type == HistoryType::Items,
-                        i18n.tr("ui.economy.items"),
+                        &i18n.tr("ui.economy.items"),
                     )
                     .clicked
                     {

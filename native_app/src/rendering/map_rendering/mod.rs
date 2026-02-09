@@ -18,7 +18,7 @@ mod trees;
 pub struct MapRenderer {
     pub meshb: MapMeshHandler,
     pub terrain: TerrainRender,
-    pub trees: TreesRender,
+    pub trees: Option<TreesRender>,
     pub water: Water,
     pub lamps: LampsRender,
 }
@@ -59,7 +59,9 @@ impl MapRenderer {
         profiling::scope!("render map renderer");
         self.terrain.draw(cam, ctx);
 
-        self.trees.draw(map, cam, ctx);
+        if let Some(trees) = self.trees.as_mut() {
+            trees.draw(map, cam, ctx);
+        }
 
         self.meshb.latest_mesh(map, options, ctx);
 

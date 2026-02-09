@@ -2,11 +2,35 @@ use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::fs;
 
-#[derive(Copy, Clone, Serialize, Deserialize, PartialEq, Eq)]
+#[derive(Copy, Clone, PartialEq, Eq)]
 #[repr(u8)]
 pub enum Language {
     English = 0,
     Russian = 1,
+}
+
+// Custom serialize/deserialize using string codes
+impl serde::ser::Serialize for Language {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: serde::ser::Serializer,
+    {
+        serializer.serialize_str(self.code())
+    }
+}
+
+impl<'de> serde::de::Deserialize<'de> for Language {
+    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
+    where
+        D: serde::de::Deserializer<'de>,
+    {
+        let code = <&str>::deserialize(deserializer)?;
+        Ok(match code {
+            "ru" | "Русский" => Language::Russian,
+            "en" | "English" => Language::English,
+            _ => Language::English,
+        })
+    }
 }
 
 impl Default for Language {
@@ -42,7 +66,6 @@ impl AsRef<str> for Language {
     }
 }
 
-#[derive(Default)]
 pub struct I18n {
     lang: Language,
     en: HashMap<String, String>,
@@ -66,32 +89,34 @@ impl I18n {
     }
 
     pub fn set_language(&mut self, lang: Language) {
-        if self.lang == lang && !self.current.is_empty() {
-            return;
-        }
+        // Always update language, even if it's the same as current
+        // This ensures translations are reloaded
         self.lang = lang;
         self.current = load_lang(lang.code());
     }
 
-    pub fn tr<'a>(&'a self, key: &str) -> &'a str {
+    // Return an owned String to avoid borrowing values tied to `self`.
+    // This makes it safe to pass translations into GUI APIs that require
+    // `'static`-owned values or to move them into closures.
+    pub fn tr(&self, key: &str) -> String {
         if let Some(v) = self.current.get(key) {
-            return v.as_str();
+            return v.clone();
         }
         if let Some(v) = self.en.get(key) {
-            return v.as_str();
+            return v.clone();
         }
-        key
+        key.to_string()
     }
 
-    pub fn try_tr<'a>(&'a self, key: &str) -> Option<&'a str> {
+    pub fn try_tr(&self, key: &str) -> Option<String> {
         self.current
             .get(key)
             .or_else(|| self.en.get(key))
-            .map(String::as_str)
+            .map(|s| s.clone())
     }
 
     pub fn tr_args(&self, key: &str, args: &[(&str, String)]) -> String {
-        let mut s = self.tr(key).to_string();
+        let mut s = self.tr(key);
         for (k, v) in args {
             s = s.replace(&format!("{{{k}}}"), v);
         }
@@ -100,7 +125,7 @@ impl I18n {
 
     pub fn proto_label(&self, proto_type: &str, name: &str, fallback: &str) -> String {
         let key = format!("proto.{proto_type}.{name}");
-        self.try_tr(&key).unwrap_or(fallback).to_string()
+        self.try_tr(&key).unwrap_or_else(|| fallback.to_string())
     }
 }
 
@@ -111,13 +136,17 @@ impl Default for I18n {
 }
 
 fn load_lang(code: &str) -> HashMap<String, String> {
+    log::info!("i18n: attempting to load language '{}'", code);
     let path = format!("assets/i18n/{code}.json");
     let Ok(data) = fs::read_to_string(&path) else {
         log::warn!("i18n: missing translation file {}", path);
         return HashMap::new();
     };
     match serde_json::from_str::<HashMap<String, String>>(&data) {
-        Ok(map) => map,
+        Ok(map) => {
+            log::info!("Loaded i18n language {} with {} entries", code, map.len());
+            map
+        }
         Err(e) => {
             log::warn!("i18n: failed to parse {}: {}", path, e);
             HashMap::new()

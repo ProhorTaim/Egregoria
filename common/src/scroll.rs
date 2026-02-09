@@ -44,7 +44,7 @@ impl<K: Ord + Clone> BTreeMapScroller<K> {
     }
 
     /// See [`BTreeMapScroller`](struct.BTreeMapScroller.html) for more details
-    pub fn iter<'a, V>(&'a mut self, btree: &'a BTreeMap<K, V>) -> impl Iterator<Item = (&K, &V)> {
+    pub fn iter<'a, V>(&'a mut self, btree: &'a BTreeMap<K, V>) -> impl Iterator<Item = (&'a K, &'a V)> {
         let left_bound;
         if let Some(x) = self.pivot.take() {
             left_bound = Bound::Excluded(x);
@@ -62,7 +62,7 @@ impl<K: Ord + Clone> BTreeMapScroller<K> {
     pub fn iter_mut<'a, V>(
         &'a mut self,
         btree: &'a mut BTreeMap<K, V>,
-    ) -> impl Iterator<Item = (&K, &mut V)> {
+    ) -> impl Iterator<Item = (&'a K, &'a mut V)> {
         let left_bound;
         if let Some(x) = self.pivot.take() {
             left_bound = Bound::Excluded(x);
@@ -101,7 +101,7 @@ impl<K: Ord + Clone> BTreeSetScroller<K> {
 
     /// See [`BTreeSetScroller`](struct.BTreeSetScroller.html) for more details
     /// Returns an iterator over the keys of the btree, but the iterator can stop without a ref to the btree and can start again
-    pub fn iter<'a>(&'a mut self, btree: &'a BTreeSet<K>) -> impl Iterator<Item = &K> {
+    pub fn iter<'a>(&'a mut self, btree: &'a BTreeSet<K>) -> impl Iterator<Item = &'a K> {
         let left_bound;
         if let Some(x) = self.pivot.take() {
             left_bound = Bound::Excluded(x);
@@ -119,7 +119,7 @@ impl<K: Ord + Clone> BTreeSetScroller<K> {
     /// Returns an iterator over the keys of the btree, but the iterator can stop without a ref to the btree and can start again
     /// The iterator will start again from the beginning on the next iter_looped call when it reaches the end
     /// This is not an infinite iterator, any key may not be processed twice in a single iter_looped call
-    pub fn iter_looped<'a>(&'a mut self, btree: &'a BTreeSet<K>) -> impl Iterator<Item = &K> {
+    pub fn iter_looped<'a>(&'a mut self, btree: &'a BTreeSet<K>) -> impl Iterator<Item = &'a K> {
         if self.exhausted(btree) {
             self.reset();
         }

@@ -16,23 +16,28 @@ pub struct YakuiWrapper {
 }
 
 impl YakuiWrapper {
-    pub fn new(gfx: &GfxContext, el: &Window) -> Self {
+    pub fn new(gfx: &GfxContext, el: &Window) -> Result<Self, String> {
         let yakui = Yakui::new();
 
         let fonts = yakui.dom().get_global_or_init(Fonts::default);
+        
         let font = Font::from_bytes(
             include_bytes!("../../assets/font_awesome_solid_900.otf").as_slice(),
             FontSettings::default(),
         )
-        .unwrap();
+        .map_err(|e| format!("Failed to load font_awesome: {:?}", e))?;
         fonts.add(font, Some("icons"));
 
         let font = Font::from_bytes(
             include_bytes!("../../assets/SpaceMono-Regular.ttf").as_slice(),
             FontSettings::default(),
-        )
-        .unwrap();
-        fonts.add(font, Some("monospace"));
+        );
+
+        if let Ok(font) = font {
+            fonts.add(font, Some("monospace"));
+        } else {
+            log::warn!("Failed to load SpaceMono-Regular.ttf, using default font");
+        }
 
         let platform = yakui_winit::YakuiWinit::new(el);
 
@@ -45,14 +50,14 @@ impl YakuiWrapper {
             wgpu::FilterMode::Linear,
         );
 
-        Self {
+        Ok(Self {
             blur_bg_texture: texture_id,
             yakui,
             renderer,
             platform,
             zoom_factor: 1.0,
             format: gfx.fbos.format,
-        }
+        })
     }
 
     pub fn load_texture(&mut self, gfx: &mut GfxContext, path: &PathBuf) -> TextureId {

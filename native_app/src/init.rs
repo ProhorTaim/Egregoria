@@ -105,8 +105,28 @@ fn register_resource<T: 'static + Default + Serialize + DeserializeOwned>(name: 
                 <common::saveload::JSONPretty as Encoder>::save(&*uiworld.read::<T>(), name);
             }),
             load: Box::new(move |uiworld| {
-                if let Ok(res) = <common::saveload::JSON as Encoder>::load::<T>(name) {
-                    uiworld.insert(res);
+                if name == "settings" {
+                    log::warn!("📄 ABOUT TO LOAD SETTINGS FROM DISK");
+                    if let Ok(content) = std::fs::read_to_string("settings.json") {
+                        log::warn!("📄 JSON RAW CONTENT: {}", content);
+                    }
+                }
+                match <common::saveload::JSON as Encoder>::load::<T>(name) {
+                    Ok(res) => {
+                        if name == "settings" {
+                            log::warn!("✅ LOADED SETTINGS FROM DISK - about to insert");
+                        } else {
+                            log::debug!("Loaded {} from disk, inserting into uiworld", name);
+                        }
+                        uiworld.insert(res);
+                        if name == "settings" {
+                            let s = uiworld.read::<Settings>();
+                            log::warn!("✅ SETTINGS INSERTED - language value is: {}", s.language as u8);
+                        }
+                    },
+                    Err(e) => {
+                        log::warn!("❌ FAILED TO LOAD {} FROM DISK: {}, keeping default", name,e);
+                    }
                 }
             }),
         });

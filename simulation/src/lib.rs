@@ -320,19 +320,19 @@ impl Simulation {
         self.world.contains(id)
     }
 
-    pub fn write_or_default<T: Any + Send + Sync + Default>(&mut self) -> RefMut<T> {
+    pub fn write_or_default<T: Any + Send + Sync + Default>(&mut self) -> RefMut<'_, T> {
         self.resources.write_or_default::<T>()
     }
 
-    pub fn try_write<T: Any + Send + Sync>(&self) -> Option<RefMut<T>> {
+    pub fn try_write<T: Any + Send + Sync>(&self) -> Option<RefMut<'_, T>> {
         self.resources.try_write().ok()
     }
 
-    pub fn write<T: Any + Send + Sync>(&self) -> RefMut<T> {
+    pub fn write<T: Any + Send + Sync>(&self) -> RefMut<'_, T> {
         self.resources.write()
     }
 
-    pub fn read<T: Any + Send + Sync>(&self) -> Ref<T> {
+    pub fn read<T: Any + Send + Sync>(&self) -> Ref<'_, T> {
         self.resources.read()
     }
 

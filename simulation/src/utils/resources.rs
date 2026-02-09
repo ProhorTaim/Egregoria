@@ -57,14 +57,14 @@ impl Resources {
             .map(|resource| downcast_resource(resource.into_inner().unwrap()))
     }
 
-    pub fn write_or_default<T: Any + Send + Sync + Default>(&mut self) -> RefMut<T> {
+    pub fn write_or_default<T: Any + Send + Sync + Default>(&mut self) -> RefMut<'_, T> {
         self.write_or_insert_with(Default::default)
     }
 
     pub fn write_or_insert_with<T: Any + Send + Sync>(
         &mut self,
         f: impl FnOnce() -> T,
-    ) -> RefMut<T> {
+    ) -> RefMut<'_, T> {
         unsafe {
             // Safety: we just created the rwlock with a &mut self, it cannot be poisoned yet
             RefMut::from_lock(
@@ -76,11 +76,11 @@ impl Resources {
         }
     }
 
-    pub fn read<T: Any + Send + Sync>(&self) -> Ref<T> {
+    pub fn read<T: Any + Send + Sync>(&self) -> Ref<'_, T> {
         Ref::from_lock(self.resources.get(&TypeId::of::<T>()).unwrap()).unwrap()
     }
 
-    pub fn try_read<T: Any + Send + Sync>(&self) -> Result<Ref<T>, CantGetResource> {
+    pub fn try_read<T: Any + Send + Sync>(&self) -> Result<Ref<'_, T>, CantGetResource> {
         Ok(Ref::from_lock(
             self.resources
                 .get(&TypeId::of::<T>())
@@ -88,11 +88,11 @@ impl Resources {
         )?)
     }
 
-    pub fn write<T: Any + Send + Sync>(&self) -> RefMut<T> {
+    pub fn write<T: Any + Send + Sync>(&self) -> RefMut<'_, T> {
         RefMut::from_lock(self.resources.get(&TypeId::of::<T>()).unwrap()).unwrap()
     }
 
-    pub fn try_write<T: Any + Send + Sync>(&self) -> Result<RefMut<T>, CantGetResource> {
+    pub fn try_write<T: Any + Send + Sync>(&self) -> Result<RefMut<'_, T>, CantGetResource> {
         Ok(RefMut::from_lock(
             self.resources
                 .get(&TypeId::of::<T>())
@@ -187,11 +187,11 @@ impl ResourcesSingleThread {
             .map(|resource| downcast_resource_single_thread(resource.into_inner()))
     }
 
-    pub fn write_or_default<T: Any + Default>(&mut self) -> RefMutSingle<T> {
+    pub fn write_or_default<T: Any + Default>(&mut self) -> RefMutSingle<'_, T> {
         self.write_or_insert_with(Default::default)
     }
 
-    pub fn write_or_insert_with<T: Any>(&mut self, f: impl FnOnce() -> T) -> RefMutSingle<T> {
+    pub fn write_or_insert_with<T: Any>(&mut self, f: impl FnOnce() -> T) -> RefMutSingle<'_, T> {
         unsafe {
             // Safety: we just created the rwlock with a &mut self, it cannot be poisoned yet
             RefMutSingle::from_lock(
@@ -203,11 +203,11 @@ impl ResourcesSingleThread {
         }
     }
 
-    pub fn read<T: Any>(&self) -> RefSingle<T> {
+    pub fn read<T: Any>(&self) -> RefSingle<'_, T> {
         RefSingle::from_lock(self.resources.get(&TypeId::of::<T>()).unwrap()).unwrap()
     }
 
-    pub fn try_read<T: Any>(&self) -> Result<RefSingle<T>, CantGetResource> {
+    pub fn try_read<T: Any>(&self) -> Result<RefSingle<'_, T>, CantGetResource> {
         Ok(RefSingle::from_lock(
             self.resources
                 .get(&TypeId::of::<T>())
@@ -215,11 +215,11 @@ impl ResourcesSingleThread {
         )?)
     }
 
-    pub fn write<T: Any>(&self) -> RefMutSingle<T> {
+    pub fn write<T: Any>(&self) -> RefMutSingle<'_, T> {
         RefMutSingle::from_lock(self.resources.get(&TypeId::of::<T>()).unwrap()).unwrap()
     }
 
-    pub fn try_write<T: Any>(&self) -> Result<RefMutSingle<T>, CantGetResource> {
+    pub fn try_write<T: Any>(&self) -> Result<RefMutSingle<'_, T>, CantGetResource> {
         Ok(RefMutSingle::from_lock(
             self.resources
                 .get(&TypeId::of::<T>())

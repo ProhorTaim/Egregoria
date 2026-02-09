@@ -8,8 +8,24 @@ use crate::i18n::I18n;
 use crate::uiworld::UiWorld;
 
 pub fn train_properties(uiw: &UiWorld) {
+    // Read translations and current values into owned Strings so we don't
+    // keep a borrow of `I18n` across UI closures.
     let i18n = uiw.read::<I18n>();
     let mut state = uiw.write::<TrainSpawnResource>();
+
+    let remove_label = i18n.tr("ui.train.remove");
+    let acceleration_label = i18n.tr_args(
+        "ui.train.acceleration",
+        &[("value", format!("{:.1}", state.acceleration))],
+    );
+    let deceleration_label = i18n.tr_args(
+        "ui.train.deceleration",
+        &[("value", format!("{:.1}", state.deceleration))],
+    );
+    let total_length_label = i18n.tr_args(
+        "ui.train.total_length",
+        &[("value", format!("{}", state.total_lenght.ceil()))],
+    );
 
     padxy(0.0, 0.0, || {
         let mut l = List::row();
@@ -18,22 +34,13 @@ pub fn train_properties(uiw: &UiWorld) {
         l.item_spacing = 10.0;
         l.show(|| {
             mincolumn(0.1, || {
-                if button(i18n.tr("ui.train.remove")).clicked {
+                if button(remove_label.clone()).clicked {
                     state.wagons.clear();
                     state.set_zero();
                 }
-                label(i18n.tr_args(
-                    "ui.train.acceleration",
-                    &[("value", format!("{:.1}", state.acceleration))],
-                ));
-                label(i18n.tr_args(
-                    "ui.train.deceleration",
-                    &[("value", format!("{:.1}", state.deceleration))],
-                ));
-                label(i18n.tr_args(
-                    "ui.train.total_length",
-                    &[("value", format!("{}", state.total_lenght.ceil()))],
-                ));
+                label(acceleration_label.clone());
+                label(deceleration_label.clone());
+                label(total_length_label.clone());
             });
 
             mincolumn(0.5, || {
@@ -45,8 +52,7 @@ pub fn train_properties(uiw: &UiWorld) {
                         .map(|id| RollingStockID::prototype(*id))
                         .enumerate()
                     {
-                        let label =
-                            i18n.proto_label("rolling_stock", &rs.name, &rs.label);
+                        let label = uiw.read::<I18n>().proto_label("rolling_stock", &rs.name, &rs.label);
                         if button(label).clicked {
                             remove = Some(i);
                         }
@@ -61,7 +67,7 @@ pub fn train_properties(uiw: &UiWorld) {
 
                 minrow(0.0, || {
                     for rolling_stock in prototypes_iter::<RollingStockPrototype>() {
-                        let label = i18n.proto_label(
+                        let label = uiw.read::<I18n>().proto_label(
                             "rolling_stock",
                             &rolling_stock.name,
                             &rolling_stock.label,

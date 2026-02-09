@@ -261,7 +261,6 @@ impl Context {
         let input = InputContext::default();
         let audio = AudioContext::new();
         let egui = EguiWrapper::new(&gfx, el);
-
         Self {
             input,
             audio,
@@ -270,7 +269,8 @@ impl Context {
             times: EngineTimes::default(),
             egui,
             #[cfg(feature = "yakui")]
-            yakui: crate::yakui::YakuiWrapper::new(&gfx, &gfx.window),
+            yakui: crate::yakui::YakuiWrapper::new(&gfx, &gfx.window)
+                .unwrap_or_else(|e| panic!("Failed to initialize Yakui: {}", e)),
             gfx,
         }
     }

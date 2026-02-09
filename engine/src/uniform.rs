@@ -52,7 +52,7 @@ where
         }
     }
 
-    pub(crate) fn bindgroup_entry(&self, binding: u32) -> BindGroupEntry {
+    pub(crate) fn bindgroup_entry(&self, binding: u32) -> BindGroupEntry<'_> {
         BindGroupEntry {
             binding,
             resource: wgpu::BindingResource::Buffer(BufferBinding {

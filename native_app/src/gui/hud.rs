@@ -30,7 +30,10 @@ pub fn render_newgui(uiworld: &UiWorld, sim: &Simulation) {
     profiling::scope!("hud::render");
     {
         let lang = uiworld.read::<Settings>().language;
-        if uiworld.read::<I18n>().language() != lang {
+        let current_lang = uiworld.read::<I18n>().language();
+        log::debug!("Current Settings.language: {}, I18n.language: {}", lang.code(), current_lang.code());
+        if current_lang != lang {
+            log::info!("Switching language from {} to {}", current_lang.code(), lang.code());
             uiworld.write::<I18n>().set_language(lang);
         }
     }

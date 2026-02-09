@@ -66,7 +66,7 @@ impl PBuffer {
         }))
     }
 
-    pub fn slice(&self) -> Option<BufferSlice> {
+    pub fn slice(&self) -> Option<BufferSlice<'_>> {
         if self.len == 0 {
             return None;
         }

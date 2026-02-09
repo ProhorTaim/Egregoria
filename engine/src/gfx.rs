@@ -85,6 +85,7 @@ pub struct GfxContext {
     pub(crate) adapter: Adapter,
 
     pub perf: PerfCounters,
+    pub current_frame_copy: Option<crate::Texture>,
 }
 
 #[derive(Serialize, Deserialize, Copy, Clone, Eq, PartialEq)]
@@ -314,7 +315,9 @@ impl GfxContext {
         let win_scale_factor = window.scale_factor();
 
         let sc_desc = SurfaceConfiguration {
-            usage: TextureUsages::RENDER_ATTACHMENT | TextureUsages::TEXTURE_BINDING,
+            // Use the capabilities-provided usage flags to avoid requesting
+            // unsupported texture usages on some platforms (e.g. macOS Metal).
+            usage: capabilities.usages,
             format,
             width: win_width,
             height: win_height,
@@ -445,6 +448,7 @@ impl GfxContext {
             settings: None,
             perf: Default::default(),
             mipmap_gen,
+            current_frame_copy: None,
         };
 
         me.update_simplelit_bg();
@@ -682,18 +686,58 @@ impl GfxContext {
         self.lamplights
             .apply_changes(&self.queue, &self.device, &mut before_main);
 
-        (
-            Encoders {
-                pbr: None,
-                smap: Default::default(),
-                depth_prepass: None,
-                main: None,
-                before_main,
-                after_main,
-                gui: None,
-            },
-            sco.texture.create_view(&TextureViewDescriptor::default()),
-        )
+        {
+            // Create an intermediate copy of the swapchain texture that is usable as a sampled
+            // texture (has TEXTURE_BINDING). Some platforms (Metal) provide swapchain textures
+            // without TEXTURE_BINDING which causes bind group creation to fail when sampled.
+            let temp = TextureBuilder::empty(
+                self.sc_desc.width,
+                self.sc_desc.height,
+                1,
+                self.sc_desc.format,
+            )
+            .with_usage(TextureUsages::RENDER_ATTACHMENT
+                | TextureUsages::TEXTURE_BINDING
+                | TextureUsages::COPY_DST
+                | TextureUsages::COPY_SRC)
+            .with_no_anisotropy()
+            .with_fixed_mipmaps(1)
+            .build_no_queue(&self.device);
+
+            // Copy swapchain texture -> intermediate so we can sample from it safely.
+            before_main.copy_texture_to_texture(
+                ImageCopyTexture {
+                    texture: &sco.texture,
+                    mip_level: 0,
+                    origin: wgpu::Origin3d::ZERO,
+                    aspect: wgpu::TextureAspect::All,
+                },
+                ImageCopyTexture {
+                    texture: &temp.texture,
+                    mip_level: 0,
+                    origin: wgpu::Origin3d::ZERO,
+                    aspect: wgpu::TextureAspect::All,
+                },
+                temp.extent,
+            );
+
+            // Keep the copy alive for the frame so it can be used as a sample source.
+            self.current_frame_copy = Some(temp);
+
+            // Return the original swapchain view for rendering into the presented texture.
+            (
+                Encoders {
+                    pbr: None,
+                    smap: Default::default(),
+                    depth_prepass: None,
+                    main: None,
+                    before_main,
+                    after_main,
+                    gui: None,
+                },
+                sco.texture.create_view(&TextureViewDescriptor::default()),
+            )
+        }
     }
 
     pub fn get_module(&self, name: &str) -> CompiledModule {
@@ -972,6 +1016,8 @@ impl GfxContext {
                 .check_shader_updates(&self.defines, &self.device);
         }
         self.tick += 1;
+        // Drop intermediate copy of the frame so texture memory is freed after submission.
+        self.current_frame_copy = None;
     }
 
     pub fn create_textures(device: &Device, desc: &SurfaceConfiguration, samples: u32) -> FBOs {

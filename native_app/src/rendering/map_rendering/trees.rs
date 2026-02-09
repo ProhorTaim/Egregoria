@@ -15,15 +15,21 @@ pub struct TreesRender {
 }
 
 impl TreesRender {
-    pub fn new(gfx: &mut GfxContext, map: &Map) -> Self {
-        let mesh = gfx.mesh("pine.glb".as_ref()).expect("could not load pine");
+    pub fn new(gfx: &mut GfxContext, map: &Map) -> Option<Self> {
+        let mesh = match gfx.mesh("pine.glb".as_ref()) {
+            Ok(m) => m,
+            Err(e) => {
+                log::warn!("Failed to load pine tree model: {:?}, trees will not be rendered", e);
+                return None;
+            }
+        };
 
         let tree_sub = map.subscribe(UpdateType::Terrain);
-        Self {
+        Some(Self {
             tree_builder: InstancedMeshBuilder::new_ref(&mesh),
             trees_cache: FastMap::default(),
             tree_sub,
-        }
+        })
     }
 
     fn build(&mut self, map: &Map, ctx: &mut FrameContext<'_>) {

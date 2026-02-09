@@ -112,7 +112,7 @@ impl Texture {
                 height: sc_desc.height,
                 depth_or_array_layers: 1,
             },
-            usage: TextureUsages::RENDER_ATTACHMENT,
+                usage: TextureUsages::RENDER_ATTACHMENT | TextureUsages::TEXTURE_BINDING | TextureUsages::COPY_SRC | TextureUsages::COPY_DST,
             mip_level_count: 1,
             sample_count: samples,
             dimension: wgpu::TextureDimension::D2,

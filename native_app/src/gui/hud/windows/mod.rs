@@ -29,6 +29,7 @@ impl GUIWindows {
 
         if button_primary(i18n.tr("ui.windows.settings")).show().clicked {
             self.settings_open ^= true;
+            log::info!("Settings button clicked! settings_open is now: {}", self.settings_open);
         }
 
         if button_primary(i18n.tr("ui.windows.load")).show().clicked {

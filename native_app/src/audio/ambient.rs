@@ -14,24 +14,15 @@ pub struct Ambient {
 
 impl Ambient {
     pub fn new(ctx: &mut AudioContext) -> Self {
-        let wind = ctx.play_with_control(
-            "calm_wind",
-            |s| {
-                let (g_control, signal) = Gain::new(Cycle::new(s), 0.0);
-                (g_control, signal)
-            },
-            AudioKind::Effect,
-        );
-        let forest = ctx.play_with_control(
-            "forest",
-            |s| {
-                let (g_control, signal) = Gain::new(Cycle::new(s), 0.0);
-                (g_control, signal)
-            },
-            AudioKind::Effect,
-        );
-
-        Self { wind, forest }
+        log::info!("Ambient::new() starting...");
+        
+        // Skip ambient sounds for now - they cause crashes in oddio backend
+        log::warn!("Skipping ambient sound initialization to avoid crashes");
+        
+        Self { 
+            wind: None,
+            forest: None,
+        }
     }
 
     pub fn update(&mut self, sim: &Simulation, uiworld: &UiWorld) {

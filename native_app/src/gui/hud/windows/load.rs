@@ -31,9 +31,15 @@ impl Default for LoadState {
 /// Load window
 /// Allows to load a replay from disk and play it
 pub fn load(uiw: &UiWorld, _: &Simulation, opened: &mut bool) {
-    let i18n = uiw.read::<I18n>();
+    // Precompute owned translation strings to avoid borrowing `I18n` inside UI closures.
+    let title = uiw.read::<I18n>().tr("ui.load.title");
+    let new_game_label = uiw.read::<I18n>().tr("ui.load.new_game");
+    let load_world_label = uiw.read::<I18n>().tr("ui.load.load_world");
+    let failed_label = uiw.read::<I18n>().tr("ui.load.failed");
+    let no_replay_label = uiw.read::<I18n>().tr("ui.load.no_replay");
+
     Window {
-        title: i18n.tr("ui.load.title").into(),
+        title: title.into(),
         pad: Pad::all(10.0),
         radius: 10.0,
         opened,
@@ -42,12 +48,12 @@ pub fn load(uiw: &UiWorld, _: &Simulation, opened: &mut bool) {
     .show(|| {
         let mut state = uiw.write::<LoadState>();
 
-        if button_primary(i18n.tr("ui.load.new_game")).show().clicked {
+        if button_primary(new_game_label.clone()).show().clicked {
             uiw.write::<SaveLoadState>().please_load_sim = Some(Simulation::new(true));
         }
 
         if state.has_save {
-            if button_primary(i18n.tr("ui.load.load_world"))
+            if button_primary(load_world_label.clone())
                 .show()
                 .clicked
             {
@@ -61,35 +67,28 @@ pub fn load(uiw: &UiWorld, _: &Simulation, opened: &mut bool) {
                     uiw.write::<SaveLoadState>().please_load = Some(loader);
                     uiw.write::<SaveLoadState>().please_load_sim = Some(sim);
                 } else {
-                    state.load_fail = i18n.tr("ui.load.failed").to_string();
+                    state.load_fail = failed_label.clone();
                 }
             }
         } else {
-            textc(
-                on_secondary_container(),
-                i18n.tr("ui.load.no_replay").to_string(),
-            );
+            textc(on_secondary_container(), no_replay_label.clone());
         }
 
         if let Some(ref mut loading) = uiw.write::<SaveLoadState>().please_load {
             let ticks_done = loading.pastt.0;
             let ticks_total = loading.replay.last_tick_recorded.0;
+            let loading_text = uiw.read::<I18n>().tr_args(
+                "ui.load.loading_replay",
+                &[("done", format!("{ticks_done}")), ("total", format!("{ticks_total}"))],
+            );
+
             ProgressBar {
                 value: ticks_done as f32 / ticks_total as f32,
                 size: Vec2::new(400.0, 25.0),
                 color: primary().adjust(0.7),
             }
             .show_children(|| {
-                textc(
-                    on_secondary_container(),
-                    i18n.tr_args(
-                        "ui.load.loading_replay",
-                        &[
-                            ("done", format!("{ticks_done}")),
-                            ("total", format!("{ticks_total}")),
-                        ],
-                    ),
-                );
+                textc(on_secondary_container(), loading_text.clone());
             });
 
             minrow(5.0, || {
