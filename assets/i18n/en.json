@@ -36,6 +36,8 @@
   "ui.settings.reset": "Reset",
   "ui.settings.empty": "<empty>",
   "ui.settings.language": "Language",
+  "ui.settings.language.english": "English",
+  "ui.settings.language.russian": "Русский",
 
   "ui.menu.money": "Money: {value}",
   "ui.menu.saving": "Saving...",

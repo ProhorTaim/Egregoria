@@ -59,9 +59,9 @@ impl Default for Settings {
             auto_save_every: AutoSaveEvery::FiveMinutes,
             camera_smooth_tightness: 1.0,
             camera_fov: 60.0,
-            gui_scale: 1.8,
+            gui_scale: 1.0,
             gfx: GfxSettings::default(),
-            language: Language::Russian,
+            language: Language::English,
         }
     }
 }

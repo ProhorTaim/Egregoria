@@ -106,8 +106,8 @@ fn register_resource<T: 'static + Default + Serialize + DeserializeOwned>(name: 
             }),
             load: Box::new(move |uiworld| {
                 if name == "settings" {
-                    log::warn!("📄 ABOUT TO LOAD SETTINGS FROM DISK");
-                    if let Ok(content) = std::fs::read_to_string("settings.json") {
+                    log::warn!("📄 ABOUT TO LOAD SETTINGS FROM DISK - path: world/settings.json");
+                    if let Ok(content) = std::fs::read_to_string("world/settings.json") {
                         log::warn!("📄 JSON RAW CONTENT: {}", content);
                     }
                 }

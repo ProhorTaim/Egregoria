@@ -340,28 +340,43 @@ impl Road {
         contour[0] = start_height;
         *contour.last_mut().unwrap() = end_height;
 
+        // Calculate the expected road height at each point (linear interpolation)
+        // This is used to determine which points can follow the terrain and which must be airborn
+        let mut expected_road_height = vec![0.0; contour.len()];
+        for i in 0..contour.len() {
+            let t = if contour.len() > 1 {
+                i as f32 / (contour.len() - 1) as f32
+            } else {
+                0.0
+            };
+            expected_road_height[i] = start_height + (end_height - start_height) * t;
+        }
+
         // Then find out which points are airborn (according to maxslope)
         // To do that, we do two passes (one forward, one backward) to find the airborn points
+        // Use expected road height, not terrain height, to determine airborn status
 
         let mut airborn = Vec::with_capacity(contour.len());
 
-        let mut cur_height = contour[0];
-        for &h in &contour {
+        let mut cur_height = expected_road_height[0];
+        for i in 0..contour.len() {
+            let h = contour[i];
             let diff = cur_height - h;
 
             airborn.push(diff > maxslope);
-            cur_height -= diff.min(maxslope);
+            cur_height = expected_road_height[i] - diff.min(maxslope);
         }
 
-        let mut cur_height = contour.last().copied().unwrap();
+        let mut cur_height = expected_road_height[contour.len() - 1];
         {
             let mut i = airborn.len();
-            for &h in contour.iter().rev() {
+            for j in (0..contour.len()).rev() {
                 i -= 1;
+                let h = contour[j];
                 let diff = cur_height - h;
 
                 airborn[i] |= diff > maxslope;
-                cur_height -= diff.min(maxslope);
+                cur_height = expected_road_height[j] - diff.min(maxslope);
             }
         }
 
@@ -395,15 +410,25 @@ impl Road {
         let mut slope_was_too_steep = false;
 
         // Then linear interpolate the points between the interface points that aren't on the ground using a nice spline
+        let contour_len = contour.len() as f32;
         for w in interface.chunks(2) {
             let i1 = w[0];
             let i2 = w[1];
 
-            let h1 = contour[i1];
-            let h2 = contour[i2];
+            // Use linear interpolation of road height, not terrain height
+            let h1 = start_height + (end_height - start_height) * (i1 as f32 / (contour_len - 1.0));
+            let h2 = start_height + (end_height - start_height) * (i2 as f32 / (contour_len - 1.0));
 
-            let derivative_1 = h1 - contour.get(i1.wrapping_sub(1)).unwrap_or(&h1);
-            let derivative_2 = contour.get(i2 + 1).unwrap_or(&h2) - h2;
+            let derivative_1 = h1 - (if i1 > 0 {
+                start_height + (end_height - start_height) * ((i1 - 1) as f32 / (contour_len - 1.0))
+            } else {
+                h1
+            });
+            let derivative_2 = (if i2 + 1 < contour.len() {
+                start_height + (end_height - start_height) * ((i2 + 1) as f32 / (contour_len - 1.0))
+            } else {
+                h2
+            }) - h2;
 
             let d = (h2 - h1).abs();
 

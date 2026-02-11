@@ -139,12 +139,14 @@ pub fn roadbuild(sim: &Simulation, uiworld: &UiWorld) {
 
     let patwidth = state.pattern_builder.width();
 
+    // Snap to intersection or road endpoints, taking their heights
     if let Road(r_id) = cur_proj.kind {
         let r = &map.roads()[r_id];
         if r.points
             .first()
             .is_close(cur_proj.pos, r.interface_from(r.src) + patwidth * 0.5)
         {
+            // Snapped to road start - convert to intersection and use its height
             cur_proj = MapProject {
                 kind: Intersection(r.src),
                 pos: r.points.first(),
@@ -154,11 +156,20 @@ pub fn roadbuild(sim: &Simulation, uiworld: &UiWorld) {
             .last()
             .is_close(cur_proj.pos, r.interface_from(r.dst) + patwidth * 0.5)
         {
+            // Snapped to road end - convert to intersection and use its height
             cur_proj = MapProject {
                 kind: Intersection(r.dst),
                 pos: r.points.last(),
             };
         }
+        // If on road middle, keep the projected position with its height from the road
+    }
+    // If cur_proj is an Intersection, keep its height as-is from map.project()
+    // (Intersections have their own fixed heights)
+
+    // Only apply height offset for ground points
+    if cur_proj.is_ground() {
+        cur_proj.pos.z = mousepos.z;
     }
 
     if nosnapping {
@@ -246,18 +257,29 @@ pub fn roadbuild(sim: &Simulation, uiworld: &UiWorld) {
         Start(selected_proj) => {
             Some((selected_proj, cur_proj, None, state.pattern_builder.build()))
         }
-        CurvedConnection(src, dst) => Some((
-            src,
-            dst,
-            Some(cur_proj.pos.xy()),
-            state.pattern_builder.build(),
-        )),
+        CurvedConnection(src, mut dst) => {
+            // For curved connections with HeightReference::Start, recalculate dst height
+            if state.height_reference == HeightReference::Start {
+                dst.pos.z = src.pos.z + state.height_offset;
+            }
+            Some((
+                src,
+                dst,
+                Some(cur_proj.pos.xy()),
+                state.pattern_builder.build(),
+            ))
+        }
 
         Curved(interpoint, selected_proj) => {
             let inter = Some(interpoint);
+            // For curved with HeightReference::Start, recalculate cur_proj height
+            let mut final_proj = cur_proj;
+            if state.height_reference == HeightReference::Start {
+                final_proj.pos.z = selected_proj.pos.z + state.height_offset;
+            }
             Some((
                 selected_proj,
-                cur_proj,
+                final_proj,
                 inter,
                 state.pattern_builder.build(),
             ))
@@ -374,7 +396,7 @@ pub enum Snapping {
     SnapToAngle,
 }
 
-#[derive(Default, Clone, Copy)]
+#[derive(Default, Clone, Copy, PartialEq)]
 pub enum HeightReference {
     #[default]
     Ground,

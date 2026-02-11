@@ -36,6 +36,8 @@
   "ui.settings.reset": "Сброс",
   "ui.settings.empty": "<пусто>",
   "ui.settings.language": "Язык",
+  "ui.settings.language.english": "Английский",
+  "ui.settings.language.russian": "Русский",
 
   "ui.menu.money": "Деньги: {value}",
   "ui.menu.saving": "Сохранение...",
