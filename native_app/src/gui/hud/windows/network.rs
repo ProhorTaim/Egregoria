@@ -56,7 +56,7 @@ pub fn network(uiworld: &UiWorld, sim: &Simulation, opened: &mut bool) {
                     divider(outline(), 5.0, 1.0);
                 }
 
-                text_edit(200.0, &mut info.name, i18n.tr("ui.network.name"));
+                text_edit(200.0, &mut info.name, &i18n.tr("ui.network.name"));
 
                 if info.name.is_empty() {
                     label(i18n.tr("ui.network.enter_name"));
@@ -74,7 +74,7 @@ pub fn network(uiworld: &UiWorld, sim: &Simulation, opened: &mut bool) {
 
                 divider(outline(), 5.0, 1.0);
 
-                text_edit(200.0, &mut info.ip, i18n.tr("ui.network.ip"));
+                text_edit(200.0, &mut info.ip, &i18n.tr("ui.network.ip"));
 
                 if button_primary(i18n.tr("ui.network.connect")).show().clicked {
                     if let Some(c) = crate::network::start_client(&mut info) {
