@@ -21,6 +21,8 @@ use crate::i18n::{I18n, Language};
 use crate::inputmap::{Bindings, InputMap};
 use crate::uiworld::UiWorld;
 
+const BINDINGS_SAVE_NAME: &str = "bindings";
+
 const SETTINGS_SAVE_NAME: &str = "settings";
 
 #[derive(Copy, Clone, Serialize, Deserialize, PartialEq)]
@@ -339,6 +341,8 @@ pub fn settings(uiw: &UiWorld, _: &Simulation, opened: &mut bool) {
                 if button_primary(i18n.tr("ui.settings.reset")).show().clicked {
                     *bindings = Bindings::default();
                     uiw.write::<InputMap>().build_input_tree(&mut bindings);
+
+                    common::saveload::JSONPretty::save_silent(&*bindings, BINDINGS_SAVE_NAME);
                 }
 
                 let mut sorted_inps = bindings.0.keys().cloned().collect::<Vec<_>>();
@@ -353,41 +357,62 @@ pub fn settings(uiw: &UiWorld, _: &Simulation, opened: &mut bool) {
                             .main_axis_align_items(MainAxisAlignItems::Center)
                             .show(|| {
                                 for action in &sorted_inps {
-                                    let comb = bindings.0.get_mut(action).unwrap();
                                     padx(2.0, || {
                                         textc(on_secondary_container(), action.to_string());
                                     });
-                                    let print_comb = |index: usize| {
-                                        padx(2.0, || {
-                                            minrow(0.0, || {
-                                                let resp = if comb.0.len() > index {
-                                                    button_primary(format!("{}", comb.0[index]))
-                                                        .show()
+
+                                    padx(2.0, || {
+                                        minrow(0.0, || {
+                                            let label = {
+                                                let comb = bindings.0.get(action).unwrap();
+                                                if comb.0.len() > 0 {
+                                                    format!("{}", comb.0[0])
                                                 } else {
-                                                    button_primary(i18n.tr("ui.settings.empty"))
-                                                        .show()
-                                                };
-                                                if resp.clicked {
-                                                    let mut state = uiw.write::<KeybindState>();
-                                                    state.enabled = Some(KeybindStateInner {
-                                                        to_bind_to: action.clone(),
-                                                        cur: Default::default(),
-                                                        bind_index: index,
-                                                    });
+                                                    i18n.tr("ui.settings.empty").to_string()
                                                 }
-                                            });
+                                            };
+                                            let resp = button_primary(label).show();
+                                            if resp.clicked {
+                                                let mut state = uiw.write::<KeybindState>();
+                                                state.enabled = Some(KeybindStateInner {
+                                                    to_bind_to: action.clone(),
+                                                    cur: Default::default(),
+                                                    bind_index: 0,
+                                                });
+                                            }
                                         });
-                                    };
-                                    print_comb(0);
-                                    print_comb(1);
+                                    });
+
+                                    padx(2.0, || {
+                                        minrow(0.0, || {
+                                            let label = {
+                                                let comb = bindings.0.get(action).unwrap();
+                                                if comb.0.len() > 1 {
+                                                    format!("{}", comb.0[1])
+                                                } else {
+                                                    i18n.tr("ui.settings.empty").to_string()
+                                                }
+                                            };
+                                            let resp = button_primary(label).show();
+                                            if resp.clicked {
+                                                let mut state = uiw.write::<KeybindState>();
+                                                state.enabled = Some(KeybindStateInner {
+                                                    to_bind_to: action.clone(),
+                                                    cur: Default::default(),
+                                                    bind_index: 1,
+                                                });
+                                            }
+                                        });
+                                    });
+
                                     padxy(8.0, 2.0, || {
                                         minrow(0.0, || {
-                                            if icon_button(button_primary("arrows-rotate"))
-                                                .show()
-                                                .clicked
-                                            {
-                                                comb.0 =
-                                                    Bindings::default().0.remove(action).unwrap().0;
+                                            if icon_button(button_primary("arrows-rotate")).show().clicked {
+                                                if let Some(comb_mut) = bindings.0.get_mut(action) {
+                                                    comb_mut.0 = Bindings::default().0.remove(action).unwrap().0;
+                                                }
+                                                uiw.write::<InputMap>().build_input_tree(&mut bindings);
+                                                common::saveload::JSONPretty::save_silent(&*bindings, BINDINGS_SAVE_NAME);
                                             }
                                         });
                                     });

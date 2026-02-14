@@ -1,3 +1,4 @@
+use common::saveload::Encoder;
 use yakui::widgets::Layer;
 use yakui::{center, reflow, Alignment, Dim2, Pivot};
 
@@ -8,6 +9,8 @@ use simulation::Simulation;
 use crate::i18n::I18n;
 use crate::inputmap::{Bindings, InputAction, InputCombination, InputMap, UnitInput};
 use crate::uiworld::UiWorld;
+
+const BINDINGS_SAVE_NAME: &str = "bindings";
 
 #[derive(Default)]
 pub struct KeybindState {
@@ -95,7 +98,7 @@ impl KeybindState {
         comb.dedup_by(|a, b| a == b);
 
         input_map.build_input_tree(bindings);
-
+        common::saveload::JSONPretty::save_silent(bindings, BINDINGS_SAVE_NAME);
         self.enabled = None;
     }
 }
