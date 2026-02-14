@@ -15,11 +15,11 @@ pub struct Ambient {
 impl Ambient {
     pub fn new(ctx: &mut AudioContext) -> Self {
         log::info!("Ambient::new() starting...");
-        
+
         // Skip ambient sounds for now - they cause crashes in oddio backend
         log::warn!("Skipping ambient sound initialization to avoid crashes");
-        
-        Self { 
+
+        Self {
             wind: None,
             forest: None,
         }

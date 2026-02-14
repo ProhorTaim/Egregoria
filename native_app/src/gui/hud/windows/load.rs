@@ -53,10 +53,7 @@ pub fn load(uiw: &UiWorld, _: &Simulation, opened: &mut bool) {
         }
 
         if state.has_save {
-            if button_primary(load_world_label.clone())
-                .show()
-                .clicked
-            {
+            if button_primary(load_world_label.clone()).show().clicked {
                 let replay = Simulation::load_replay_from_disk("world");
 
                 if let Some(replay) = replay {
@@ -79,7 +76,10 @@ pub fn load(uiw: &UiWorld, _: &Simulation, opened: &mut bool) {
             let ticks_total = loading.replay.last_tick_recorded.0;
             let loading_text = uiw.read::<I18n>().tr_args(
                 "ui.load.loading_replay",
-                &[("done", format!("{ticks_done}")), ("total", format!("{ticks_total}"))],
+                &[
+                    ("done", format!("{ticks_done}")),
+                    ("total", format!("{ticks_total}")),
+                ],
             );
 
             ProgressBar {

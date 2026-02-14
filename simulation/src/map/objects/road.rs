@@ -419,11 +419,13 @@ impl Road {
             let h1 = start_height + (end_height - start_height) * (i1 as f32 / (contour_len - 1.0));
             let h2 = start_height + (end_height - start_height) * (i2 as f32 / (contour_len - 1.0));
 
-            let derivative_1 = h1 - (if i1 > 0 {
-                start_height + (end_height - start_height) * ((i1 - 1) as f32 / (contour_len - 1.0))
-            } else {
-                h1
-            });
+            let derivative_1 = h1
+                - (if i1 > 0 {
+                    start_height
+                        + (end_height - start_height) * ((i1 - 1) as f32 / (contour_len - 1.0))
+                } else {
+                    h1
+                });
             let derivative_2 = (if i2 + 1 < contour.len() {
                 start_height + (end_height - start_height) * ((i2 + 1) as f32 / (contour_len - 1.0))
             } else {

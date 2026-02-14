@@ -19,7 +19,10 @@ impl TreesRender {
         let mesh = match gfx.mesh("pine.glb".as_ref()) {
             Ok(m) => m,
             Err(e) => {
-                log::warn!("Failed to load pine tree model: {:?}, trees will not be rendered", e);
+                log::warn!(
+                    "Failed to load pine tree model: {:?}, trees will not be rendered",
+                    e
+                );
                 return None;
             }
         };

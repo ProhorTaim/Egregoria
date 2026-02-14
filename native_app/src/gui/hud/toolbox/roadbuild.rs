@@ -135,7 +135,11 @@ pub fn roadbuild_properties(uiw: &UiWorld) {
 
             // image name, label, builder
             let builders: &[(&str, &str, LanePatternBuilder)] = &[
-                ("roadtypes_street", "ui.roadtype.street", LanePatternBuilder::new()),
+                (
+                    "roadtypes_street",
+                    "ui.roadtype.street",
+                    LanePatternBuilder::new(),
+                ),
                 (
                     "roadtypes_street_1way",
                     "ui.roadtype.street_one_way",

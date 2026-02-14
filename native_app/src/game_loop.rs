@@ -20,7 +20,6 @@ use crate::gui::toolbox::building;
 use crate::gui::windows::settings::{manage_settings, Settings};
 use crate::gui::UiTextures;
 use crate::gui::{render_newgui, ExitState, GuiState, TimeAlways, Tool};
-use crate::i18n::Language;
 use crate::inputmap::{Bindings, InputAction, InputMap};
 use crate::rendering::{InstancedRender, MapRenderOptions, MapRenderer, OrbitCamera};
 use crate::uiworld::{SaveLoadState, UiWorld};
@@ -40,6 +39,7 @@ pub struct State {
     immediate_renderer: MeshBuilder<true>,
 
     all_audio: GameAudio,
+    fullscreen_bootstrap_done: bool,
 }
 
 impl engine::framework::State for State {
@@ -77,11 +77,14 @@ impl engine::framework::State for State {
         {
             let s = uiworld.read::<Settings>();
             let lang = s.language;
-            log::info!("Loaded Settings from uiworld - language field value: {:?} (code: {})", lang as u8, lang.code());
+            log::info!(
+                "Loaded Settings from uiworld - language field value: {:?} (code: {})",
+                lang as u8,
+                lang.code()
+            );
             manage_settings(ctx, &s);
             drop(s);
             uiworld.write::<crate::i18n::I18n>().set_language(lang);
-            log::info!("Game initialized with language: {}", lang.code());
         }
 
         defer!(log::info!("finished init of game loop"));
@@ -99,6 +102,7 @@ impl engine::framework::State for State {
             instanced_renderer,
             map_renderer,
             all_audio,
+            fullscreen_bootstrap_done: false,
             sim: Arc::new(RwLock::new(sim)),
             immediate_renderer: MeshBuilder::new(ctx.gfx.tess_material),
         };
@@ -108,6 +112,17 @@ impl engine::framework::State for State {
 
     fn update(&mut self, ctx: &mut Context) {
         profiling::scope!("game_loop::update");
+
+        if !self.fullscreen_bootstrap_done {
+            let gfx = self.uiw.read::<Settings>().gfx;
+            if gfx.fullscreen {
+                let mut tmp = gfx;
+                tmp.fullscreen = false;
+                ctx.gfx.update_settings(tmp);
+                ctx.gfx.update_settings(gfx);
+            }
+            self.fullscreen_bootstrap_done = true;
+        }
         self.uiw.write::<TimeAlways>().0 += ctx.delta;
 
         {

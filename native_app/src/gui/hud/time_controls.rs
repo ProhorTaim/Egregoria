@@ -52,10 +52,7 @@ pub fn time_controls(uiworld: &UiWorld, sim: &Simulation) {
     let time_text = || {
         padx(5.0, || {
             row(|| {
-                let day_label = i18n.tr_args(
-                    "ui.time.day",
-                    &[("value", format!("{}", time.day))],
-                );
+                let day_label = i18n.tr_args("ui.time.day", &[("value", format!("{}", time.day))]);
                 monospace(on_secondary_container(), day_label);
                 spacer(1);
                 monospace(

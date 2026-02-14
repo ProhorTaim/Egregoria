@@ -1,37 +1,36 @@
 ![Screenshot of Egregoria 1](assets/screen2.jpg)
 ![Screenshot of Egregoria 2](assets/screen3.jpg)
 ![Screenshot of Egregoria 3](assets/screen5.jpg)
-![Screenshot of Egregoria 3](assets/screen1.jpg)
+![Screenshot of Egregoria 4](assets/screen1.jpg)
 
 [![Build status](https://github.com/Uriopass/Egregoria/workflows/rust-build/badge.svg)](#)
 [![Discord](https://img.shields.io/discord/709730057949544488?label=discord)](https://discord.gg/CAaZhUJ)
 
 # Egregoria
 
-Egregoria is an indie city builder, mostly inspired by Cities:Skylines.  
-Each individual has its own thought model, meaning every action has its importance and influences the environment.  
-Egregoria is focused on the socio-economical aspect of a city, with a logistics element.
-The game is still in early development, but you can already play it and give some feedback through
-[issues](https://github.com/Uriopass/Egregoria/issues) or on [discord](https://discord.gg/CAaZhUJ).  
+Egregoria — инди-градостроительный симулятор, вдохновлённый Cities: Skylines.
+В игре у каждого жителя есть собственная модель поведения, поэтому каждое действие игрока влияет на экономику, логистику и жизнь города.
 
-By being open source, the hope is to get more people involved in the development of the game.  
-Mod support is wanted but the design has not been found yet.
+Проект open source и находится в активной разработке.
+Обратную связь можно оставить в [issues](https://github.com/Uriopass/Egregoria/issues) или в [Discord](https://discord.gg/CAaZhUJ).
 
-## How to play
+## Что нового в релизе 0.7.0
 
-A small tutorial is available on the [github wiki]((https://github.com/Uriopass/Egregoria/wiki/Introduction-Guide)) to get you started.
+- Улучшен интерфейс и исправлено сохранение/загрузка настроек.
+- Добавлено и доработано терраформирование.
+- Исправлены баги строительства дорог на высоте.
+- Исправлено поведение языковых настроек (English/Russian).
+- Добавлен режим пониженного рендер-разрешения для macOS (Retina) через настройки.
 
-## Devblog  
+## Как играть
 
-I keep a blog about Egregoria's development [here](http://douady.paris/blog/index.html).
+Небольшой гайд по старту доступен в [wiki](https://github.com/Uriopass/Egregoria/wiki/Introduction-Guide).
 
-## Building the project
+## Сборка проекта
 
 ### Git LFS
 
-This project uses Git LFS to track assets, therefore if you want to build your own copy you will need to install [Git LFS](https://git-lfs.github.com/).
-
-Once installed, you should be able to clone the repo and fetch the assets:
+В проекте используются Git LFS-ассеты.
 
 ```bash
 git clone https://github.com/Uriopass/Egregoria
@@ -39,34 +38,47 @@ cd Egregoria
 git lfs pull
 ```
 
-### Windows/Mac
-I personally use Windows 10 and Mac OS 10.11, and it compiles fine once the [rust toolchain is installed](https://www.rust-lang.org/tools/install).
+### Быстрый запуск (dev)
+
 ```bash
 cargo run --release
 ```
 
-Don't forget to add the `--release` flag, otherwise the game will be very slow.  
-Don't forget to pull the lfs files, otherwise the game will crash with a file not found error.
+Без `--release` производительность будет значительно хуже.
 
-### Ubuntu/Debian on x11
-There are a few libraries to install that some of my dependencies need:
+### Linux (Ubuntu/Debian, X11)
 
-```
+```bash
 sudo apt-get install libasound2-dev libudev-dev pkg-config libx11-dev
 cargo run --release
 ```
 
-Don't forget to add the `--release` flag, otherwise the game will be very slow.  
-Don't forget to pull the lfs files, otherwise the game will crash with a file not found error.
+## Релизные сборки
 
-A GitHub Action tests the builds on Ubuntu.
+### macOS (Apple Silicon)
 
-## Why Egregoria ?
+```bash
+cargo build -p native_app --release --target aarch64-apple-darwin
+```
 
-An Egregor is an autonomous psychic entity made up of, and influencing, the thoughts of a group of people.  
-It represents emergence at its purest form, where individuals come together to become a collective force.
+### Windows (GNU target)
+
+```bash
+cargo build -p native_app --release --target x86_64-pc-windows-gnu
+```
+
+### Linux (GNU target)
+
+```bash
+cargo build -p native_app --release --target x86_64-unknown-linux-gnu
+```
+
+## Почему Egregoria
+
+Эгрегор — это автономная сущность, возникающая из мыслей и взаимодействий множества людей.
+Название подчёркивает идею эмерджентности: множество агентов формируют сложное коллективное поведение.
 
 ## Credits
 
-- [`@dabreegster`](https://github.com/dabreegster): For inspiration on the map model
-- PBR Shaders are adapted from [LearnOpenGL](https://learnopengl.com/PBR/Theory)
+- [`@dabreegster`](https://github.com/dabreegster): за вдохновение для модели карты
+- PBR-шейдеры адаптированы из [LearnOpenGL](https://learnopengl.com/PBR/Theory)

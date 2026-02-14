@@ -9,7 +9,7 @@ use common::saveload::Encoder;
 use engine::GfxSettings;
 use engine::ShadowQuality;
 use goryak::{
-    button_primary, checkbox_value, combo_box, dragvalue, icon_button, minrow,
+    button_primary, button_secondary, checkbox_value, combo_box, dragvalue, icon_button, minrow,
     on_secondary_container, outline, padx, padxy, textc, VertScrollSize, Window,
 };
 use serde::{Deserialize, Serialize};
@@ -17,8 +17,8 @@ use simulation::Simulation;
 
 use crate::game_loop::Timings;
 use crate::gui::keybinds::{KeybindState, KeybindStateInner};
-use crate::inputmap::{Bindings, InputMap};
 use crate::i18n::{I18n, Language};
+use crate::inputmap::{Bindings, InputMap};
 use crate::uiworld::UiWorld;
 
 const SETTINGS_SAVE_NAME: &str = "settings";
@@ -35,6 +35,7 @@ pub struct Settings {
 
     pub gui_scale: f32,
     pub language: Language,
+    pub low_dpi_mode: bool,
 
     pub master_volume_percent: f32,
     pub music_volume_percent: f32,
@@ -59,9 +60,10 @@ impl Default for Settings {
             auto_save_every: AutoSaveEvery::FiveMinutes,
             camera_smooth_tightness: 1.0,
             camera_fov: 60.0,
-            gui_scale: 1.8,
+            gui_scale: 1.0,
             gfx: GfxSettings::default(),
-            language: Language::Russian,
+            language: Language::English,
+            low_dpi_mode: false,
         }
     }
 }
@@ -121,10 +123,7 @@ impl Default for SettingsState {
     }
 }
 
-/// Settings window
-/// This window is used to change the settings of the game
 pub fn settings(uiw: &UiWorld, _: &Simulation, opened: &mut bool) {
-    log::debug!("Rendering settings window, opened={}", opened);
     Window {
         title: uiw.read::<I18n>().tr("ui.settings.title").into(),
         pad: Pad::all(10.0),
@@ -143,46 +142,32 @@ pub fn settings(uiw: &UiWorld, _: &Simulation, opened: &mut bool) {
                 let mut settings = uiw.write::<Settings>();
                 let mut state = uiw.write::<SettingsState>();
                 let before = *settings;
-                log::warn!("🔵 SETTINGS WINDOW OPENED - before: lang={}, scale={}, border={}", before.language as u8, before.gui_scale, before.camera_border_move);
                 let i18n = uiw.read::<I18n>();
 
-                textc(
-                    on_secondary_container(),
-                    i18n.tr("ui.settings.gameplay").to_string(),
-                );
+                textc(on_secondary_container(), i18n.tr("ui.settings.gameplay"));
                 minrow(5.0, || {
-                    textc(
-                        on_secondary_container(),
-                        i18n.tr("ui.settings.autosave").to_string(),
-                    );
+                    textc(on_secondary_container(), i18n.tr("ui.settings.autosave"));
                     let mut id = settings.auto_save_every as u8 as usize;
-                    if combo_box(
-                        &mut id,
-                        &[
-                            &i18n.tr("ui.settings.autosave.never"),
-                            &i18n.tr("ui.settings.autosave.one_min"),
-                            &i18n.tr("ui.settings.autosave.five_min"),
-                        ],
-                        200.0,
-                    ) {
+                    let auto_never = i18n.tr("ui.settings.autosave.never");
+                    let auto_one = i18n.tr("ui.settings.autosave.one_min");
+                    let auto_five = i18n.tr("ui.settings.autosave.five_min");
+                    let items = [auto_never.as_str(), auto_one.as_str(), auto_five.as_str()];
+                    if combo_box(&mut id, &items, 200.0) {
                         settings.auto_save_every = AutoSaveEvery::from(id as u8);
                     }
                 });
 
                 divider(outline(), 10.0, 1.0);
-                textc(
-                    on_secondary_container(),
-                    i18n.tr("ui.settings.input").to_string(),
-                );
+                textc(on_secondary_container(), i18n.tr("ui.settings.input"));
                 checkbox_value(
                     &mut settings.camera_border_move,
                     on_secondary_container(),
-                    i18n.tr("ui.settings.camera_border_move").to_string(),
+                    i18n.tr("ui.settings.camera_border_move"),
                 );
                 checkbox_value(
                     &mut settings.camera_smooth,
                     on_secondary_container(),
-                    i18n.tr("ui.settings.camera_smooth").to_string(),
+                    i18n.tr("ui.settings.camera_smooth"),
                 );
 
                 if settings.camera_smooth {
@@ -192,10 +177,10 @@ pub fn settings(uiw: &UiWorld, _: &Simulation, opened: &mut bool) {
                             .max(2.0)
                             .step(0.1)
                             .show(&mut settings.camera_smooth_tightness);
-                    textc(
-                        on_secondary_container(),
-                        i18n.tr("ui.settings.camera_smooth_tightness").to_string(),
-                    );
+                        textc(
+                            on_secondary_container(),
+                            i18n.tr("ui.settings.camera_smooth_tightness"),
+                        );
                     });
                 }
 
@@ -205,13 +190,9 @@ pub fn settings(uiw: &UiWorld, _: &Simulation, opened: &mut bool) {
                         .max(179.0)
                         .step(1.0)
                         .show(&mut settings.camera_fov);
-                    textc(
-                        on_secondary_container(),
-                        i18n.tr("ui.settings.camera_fov").to_string(),
-                    );
+                    textc(on_secondary_container(), i18n.tr("ui.settings.camera_fov"));
                 });
 
-                // only update the fps every 300ms to avoid flickering
                 if state.fps == 0.0 || state.instant.elapsed() > Duration::from_millis(300) {
                     state.ms = uiw.read::<Timings>().all.avg();
                     state.fps = 1.0 / state.ms;
@@ -222,96 +203,91 @@ pub fn settings(uiw: &UiWorld, _: &Simulation, opened: &mut bool) {
                 #[cfg(debug_assertions)]
                 textc(
                     on_secondary_container(),
-                    i18n.tr("ui.settings.debug_fps_warning").to_string(),
+                    i18n.tr("ui.settings.debug_fps_warning"),
                 );
                 textc(
                     on_secondary_container(),
-                    format!(
-                        "{}",
-                        i18n.tr_args(
-                            "ui.settings.graphics_stats",
-                            &[
-                                ("fps", format!("{:.1}", state.fps)),
-                                ("ms", format!("{:.1}", 1000.0 * state.ms)),
-                            ],
-                        )
+                    i18n.tr_args(
+                        "ui.settings.graphics_stats",
+                        &[
+                            ("fps", format!("{:.1}", state.fps)),
+                            ("ms", format!("{:.1}", 1000.0 * state.ms)),
+                        ],
                     ),
                 );
                 checkbox_value(
                     &mut settings.gfx.fullscreen,
                     on_secondary_container(),
-                    i18n.tr("ui.settings.fullscreen").to_string(),
+                    i18n.tr("ui.settings.fullscreen"),
+                );
+                checkbox_value(
+                    &mut settings.low_dpi_mode,
+                    on_secondary_container(),
+                    "Low resolution mode (macOS, restart required)",
                 );
                 checkbox_value(
                     &mut settings.gfx.terrain_grid,
                     on_secondary_container(),
-                    i18n.tr("ui.settings.terrain_grid").to_string(),
+                    i18n.tr("ui.settings.terrain_grid"),
                 );
                 checkbox_value(
                     &mut settings.gfx.fog,
                     on_secondary_container(),
-                    i18n.tr("ui.settings.fog").to_string(),
+                    i18n.tr("ui.settings.fog"),
                 );
                 checkbox_value(
                     &mut settings.gfx.ssao,
                     on_secondary_container(),
-                    i18n.tr("ui.settings.ssao").to_string(),
+                    i18n.tr("ui.settings.ssao"),
                 );
                 checkbox_value(
                     &mut settings.gfx.msaa,
                     on_secondary_container(),
-                    i18n.tr("ui.settings.msaa").to_string(),
+                    i18n.tr("ui.settings.msaa"),
                 );
                 checkbox_value(
                     &mut settings.gfx.vsync,
                     on_secondary_container(),
-                    i18n.tr("ui.settings.vsync").to_string(),
+                    i18n.tr("ui.settings.vsync"),
                 );
                 checkbox_value(
                     &mut settings.gfx.parallel_render,
                     on_secondary_container(),
-                    i18n.tr("ui.settings.threaded_render").to_string(),
+                    i18n.tr("ui.settings.threaded_render"),
                 );
 
                 minrow(5.0, || {
                     let mut id = settings.gfx.shadows as u8 as usize;
-                    if combo_box(
-                        &mut id,
-                        &[
-                            &i18n.tr("ui.settings.shadow.none"),
-                            &i18n.tr("ui.settings.shadow.low"),
-                            &i18n.tr("ui.settings.shadow.medium"),
-                            &i18n.tr("ui.settings.shadow.high"),
-                            &i18n.tr("ui.settings.shadow.ultra"),
-                        ],
-                        200.0,
-                    ) {
+                    let s_none = i18n.tr("ui.settings.shadow.none");
+                    let s_low = i18n.tr("ui.settings.shadow.low");
+                    let s_medium = i18n.tr("ui.settings.shadow.medium");
+                    let s_high = i18n.tr("ui.settings.shadow.high");
+                    let s_ultra = i18n.tr("ui.settings.shadow.ultra");
+                    let items = [
+                        s_none.as_str(),
+                        s_low.as_str(),
+                        s_medium.as_str(),
+                        s_high.as_str(),
+                        s_ultra.as_str(),
+                    ];
+                    if combo_box(&mut id, &items, 200.0) {
                         settings.gfx.shadows = ShadowQuality::from(id as u8);
                     }
                     textc(
                         on_secondary_container(),
-                        i18n.tr("ui.settings.shadow_quality").to_string(),
+                        i18n.tr("ui.settings.shadow_quality"),
                     );
                 });
 
                 divider(outline(), 10.0, 1.0);
-                textc(
-                    on_secondary_container(),
-                    i18n.tr("ui.settings.gui").to_string(),
-                );
+                textc(on_secondary_container(), i18n.tr("ui.settings.gui"));
                 minrow(5.0, || {
                     dragvalue().min(0.5).max(2.0).show(&mut settings.gui_scale);
-                    textc(
-                        on_secondary_container(),
-                        i18n.tr("ui.settings.gui_scale").to_string(),
-                    );
+                    textc(on_secondary_container(), i18n.tr("ui.settings.gui_scale"));
                 });
 
                 divider(outline(), 10.0, 1.0);
-                textc(
-                    on_secondary_container(),
-                    i18n.tr("ui.settings.audio").to_string(),
-                );
+                textc(on_secondary_container(), i18n.tr("ui.settings.audio"));
                 minrow(5.0, || {
                     dragvalue()
                         .min(0.0)
@@ -332,7 +308,7 @@ pub fn settings(uiw: &UiWorld, _: &Simulation, opened: &mut bool) {
                         .show(&mut settings.music_volume_percent);
                     textc(
                         on_secondary_container(),
-                        i18n.tr("ui.settings.music_volume").to_string(),
+                        i18n.tr("ui.settings.music_volume"),
                     );
                 });
 
@@ -354,17 +330,11 @@ pub fn settings(uiw: &UiWorld, _: &Simulation, opened: &mut bool) {
                         .max(100.0)
                         .step(1.0)
                         .show(&mut settings.ui_volume_percent);
-                    textc(
-                        on_secondary_container(),
-                        i18n.tr("ui.settings.ui_volume").to_string(),
-                    );
+                    textc(on_secondary_container(), i18n.tr("ui.settings.ui_volume"));
                 });
 
                 divider(outline(), 10.0, 1.0);
-                textc(
-                    on_secondary_container(),
-                    i18n.tr("ui.settings.keybinds").to_string(),
-                );
+                textc(on_secondary_container(), i18n.tr("ui.settings.keybinds"));
                 let mut bindings = uiw.write::<Bindings>();
                 if button_primary(i18n.tr("ui.settings.reset")).show().clicked {
                     *bindings = Bindings::default();
@@ -425,40 +395,30 @@ pub fn settings(uiw: &UiWorld, _: &Simulation, opened: &mut bool) {
                             });
                     },
                 );
+                drop(bindings);
 
                 divider(outline(), 10.0, 1.0);
-                textc(
-                    on_secondary_container(),
-                    i18n.tr("ui.settings.language").to_string(),
-                );
+                textc(on_secondary_container(), i18n.tr("ui.settings.language"));
                 minrow(5.0, || {
-                    let mut id = settings.language as u8 as usize;
-                    if combo_box(
-                        &mut id,
-                        &[
-                            &i18n.tr("ui.settings.language.english"),
-                            &i18n.tr("ui.settings.language.russian"),
-                        ],
-                        200.0,
-                    ) {
-                        log::warn!("LANGUAGE COMBO ACTIVATED: selected index={}", id);
-                        let new_lang = Language::from(id as u8);
-                        log::warn!("Language changed to: {} (code: {})", id, new_lang.code());
-                        settings.language = new_lang;
-                        log::warn!("Settings.language updated to: {}", settings.language.code());
-                        drop(i18n); // release the read lock before writing
-                        uiw.write::<I18n>().set_language(settings.language);
-                        log::warn!("I18n updated to: {}", new_lang.code());
+                    let lang_en = i18n.tr("ui.settings.language.english");
+                    let lang_ru = i18n.tr("ui.settings.language.russian");
+
+                    if button_secondary(lang_en).show().clicked {
+                        settings.language = Language::English;
+                    }
+
+                    if button_secondary(lang_ru).show().clicked {
+                        settings.language = Language::Russian;
                     }
                 });
+                drop(i18n);
 
-                if *settings != before {
-                    log::warn!("Settings changed! Saving... (before={}, after={})", before.language as u8, settings.language as u8);
+                let settings_changed = *settings != before;
+                if settings_changed {
                     common::saveload::JSONPretty::save_silent(&*settings, SETTINGS_SAVE_NAME);
-                    log::warn!("Settings saved!");
-                } else {
-                    log::debug!("Settings not changed, skipping save");
                 }
+                drop(state);
+                drop(settings);
             });
         });
     })
@@ -466,8 +426,12 @@ pub fn settings(uiw: &UiWorld, _: &Simulation, opened: &mut bool) {
 
 pub fn manage_settings(ctx: &mut engine::Context, settings: &Settings) {
     ctx.gfx.update_settings(settings.gfx);
-
-    ctx.egui.zoom_factor = settings.gui_scale;
+    if (ctx.yakui.zoom_factor - settings.gui_scale).abs() > 0.001 {
+        ctx.yakui.zoom_factor = settings.gui_scale;
+    }
+    if (ctx.egui.zoom_factor - settings.gui_scale).abs() > 0.001 {
+        ctx.egui.zoom_factor = settings.gui_scale;
+    }
 
     ctx.audio.set_settings(
         settings.master_volume_percent,

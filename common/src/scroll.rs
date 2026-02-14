@@ -44,7 +44,10 @@ impl<K: Ord + Clone> BTreeMapScroller<K> {
     }
 
     /// See [`BTreeMapScroller`](struct.BTreeMapScroller.html) for more details
-    pub fn iter<'a, V>(&'a mut self, btree: &'a BTreeMap<K, V>) -> impl Iterator<Item = (&'a K, &'a V)> {
+    pub fn iter<'a, V>(
+        &'a mut self,
+        btree: &'a BTreeMap<K, V>,
+    ) -> impl Iterator<Item = (&'a K, &'a V)> {
         let left_bound;
         if let Some(x) = self.pivot.take() {
             left_bound = Bound::Excluded(x);

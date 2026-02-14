@@ -5,8 +5,8 @@ use engine::InputContext;
 use goryak::{blur_bg, constrained_viewport, mincolumn, on_secondary, primary, textc, titlec};
 use simulation::Simulation;
 
-use crate::inputmap::{Bindings, InputAction, InputCombination, InputMap, UnitInput};
 use crate::i18n::I18n;
+use crate::inputmap::{Bindings, InputAction, InputCombination, InputMap, UnitInput};
 use crate::uiworld::UiWorld;
 
 #[derive(Default)]
@@ -40,10 +40,7 @@ pub fn keybind_modal(uiw: &UiWorld, _: &Simulation) {
                         center(|| {
                             mincolumn(10.0, || {
                                 titlec(on_secondary(), format!("{}", state.to_bind_to));
-                                textc(
-                                    on_secondary(),
-                                    i18n.tr("ui.keybinds.press_key").to_string(),
-                                );
+                                textc(on_secondary(), i18n.tr("ui.keybinds.press_key").to_string());
                             });
                         });
                     });

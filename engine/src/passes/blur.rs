@@ -24,7 +24,10 @@ pub fn gen_ui_blur(gfx: &GfxContext, enc: &mut CommandEncoder, swapchain_view: &
     // Choose sample source: use intermediate copy if available, otherwise use the swapchain view.
     let mut maybe_owned_view: Option<TextureView> = None;
     let src_view: &TextureView = if let Some(temp) = &gfx.current_frame_copy {
-        maybe_owned_view = Some(temp.texture.create_view(&wgpu::TextureViewDescriptor::default()));
+        maybe_owned_view = Some(
+            temp.texture
+                .create_view(&wgpu::TextureViewDescriptor::default()),
+        );
         maybe_owned_view.as_ref().unwrap()
     } else {
         swapchain_view

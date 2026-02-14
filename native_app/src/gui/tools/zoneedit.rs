@@ -1,6 +1,6 @@
 use crate::gui::{ErrorTooltip, InspectedBuilding, PotentialCommands};
-use crate::inputmap::{InputAction, InputMap};
 use crate::i18n::I18n;
+use crate::inputmap::{InputAction, InputMap};
 use crate::rendering::immediate::ImmediateDraw;
 use crate::uiworld::UiWorld;
 use geom::{Polygon, Vec2};
@@ -95,10 +95,7 @@ pub fn zoneedit(sim: &Simulation, uiworld: &UiWorld) {
         )
         .find(move |x| x != &ProjectKind::Building(bid))
     {
-        invalidmsg = i18n.tr_args(
-            "ui.zoneedit.intersects",
-            &[("value", format!("{v:?}"))],
-        );
+        invalidmsg = i18n.tr_args("ui.zoneedit.intersects", &[("value", format!("{v:?}"))]);
     }
 
     let isvalid = invalidmsg.is_empty();

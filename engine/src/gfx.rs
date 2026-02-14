@@ -593,16 +593,18 @@ impl GfxContext {
     }
 
     pub fn update_settings(&mut self, settings: GfxSettings) {
-        if self.settings == Some(settings) {
-            return;
-        }
-
-        if Some(settings.fullscreen) != self.settings.map(|s| s.fullscreen) {
+        let want_fullscreen = settings.fullscreen;
+        let is_fullscreen = self.window.fullscreen().is_some();
+        if is_fullscreen != want_fullscreen {
             self.window.set_fullscreen(
                 settings
                     .fullscreen
                     .then(|| Fullscreen::Borderless(self.window.current_monitor())),
             )
+        }
+
+        if self.settings == Some(settings) {
+            return;
         }
 
         let present_mode = if settings.vsync {
@@ -696,10 +698,12 @@ impl GfxContext {
                 1,
                 self.sc_desc.format,
             )
-            .with_usage(TextureUsages::RENDER_ATTACHMENT
-                | TextureUsages::TEXTURE_BINDING
-                | TextureUsages::COPY_DST
-                | TextureUsages::COPY_SRC)
+            .with_usage(
+                TextureUsages::RENDER_ATTACHMENT
+                    | TextureUsages::TEXTURE_BINDING
+                    | TextureUsages::COPY_DST
+                    | TextureUsages::COPY_SRC,
+            )
             .with_no_anisotropy()
             .with_fixed_mipmaps(1)
             .build_no_queue(&self.device);

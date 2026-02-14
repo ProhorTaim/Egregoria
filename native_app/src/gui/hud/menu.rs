@@ -89,13 +89,19 @@ fn save_window(gui: &mut GuiState, uiw: &UiWorld) {
                     }
                     return;
                 }
-                if button_secondary(i18n.tr("ui.menu.save_exit")).show().clicked {
+                if button_secondary(i18n.tr("ui.menu.save_exit"))
+                    .show()
+                    .clicked
+                {
                     if let ExitState::ExitAsk = *estate {
                         slstate.please_save = true;
                         *estate = ExitState::Saving;
                     }
                 }
-                if button_secondary(i18n.tr("ui.menu.exit_no_save")).show().clicked {
+                if button_secondary(i18n.tr("ui.menu.exit_no_save"))
+                    .show()
+                    .clicked
+                {
                     std::process::exit(0);
                 }
                 if button_secondary(i18n.tr("ui.menu.cancel")).show().clicked {
@@ -124,7 +130,10 @@ fn save_window(gui: &mut GuiState, uiw: &UiWorld) {
             }
         }
         ExitState::ExitAsk => {
-            if button_secondary(i18n.tr("ui.menu.save_exit")).show().clicked {
+            if button_secondary(i18n.tr("ui.menu.save_exit"))
+                .show()
+                .clicked
+            {
                 if let ExitState::ExitAsk = *estate {
                     slstate.please_save = true;
                     *estate = ExitState::Saving;

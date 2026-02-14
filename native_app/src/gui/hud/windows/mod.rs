@@ -2,8 +2,8 @@ pub mod economy;
 pub mod load;
 pub mod settings;
 
-use crate::inputmap::{InputAction, InputMap};
 use crate::i18n::I18n;
+use crate::inputmap::{InputAction, InputMap};
 use crate::uiworld::UiWorld;
 use goryak::button_primary;
 use simulation::Simulation;
@@ -27,9 +27,11 @@ impl GUIWindows {
             self.economy_open ^= true;
         }
 
-        if button_primary(i18n.tr("ui.windows.settings")).show().clicked {
+        if button_primary(i18n.tr("ui.windows.settings"))
+            .show()
+            .clicked
+        {
             self.settings_open ^= true;
-            log::info!("Settings button clicked! settings_open is now: {}", self.settings_open);
         }
 
         if button_primary(i18n.tr("ui.windows.load")).show().clicked {

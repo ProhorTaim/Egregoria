@@ -313,14 +313,12 @@ pub fn economy(uiw: &UiWorld, sim: &Simulation, opened: &mut bool) {
         match tab {
             EconomyTab::ImportExports => {
                 let (label_left, label_right) = match hist_type {
-                    HistoryType::Items => (
-                        i18n.tr("ui.economy.imports"),
-                        i18n.tr("ui.economy.exports"),
-                    ),
-                    HistoryType::Money => (
-                        i18n.tr("ui.economy.expenses"),
-                        i18n.tr("ui.economy.income"),
-                    ),
+                    HistoryType::Items => {
+                        (i18n.tr("ui.economy.imports"), i18n.tr("ui.economy.exports"))
+                    }
+                    HistoryType::Money => {
+                        (i18n.tr("ui.economy.expenses"), i18n.tr("ui.economy.income"))
+                    }
                 };
 
                 constrained_viewport(|| {

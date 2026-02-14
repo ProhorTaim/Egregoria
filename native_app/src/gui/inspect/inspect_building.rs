@@ -30,11 +30,9 @@ pub fn inspect_building(uiworld: &UiWorld, sim: &Simulation, id: BuildingID) -> 
 
     let title = match building.kind {
         BuildingKind::House => i18n.tr("ui.inspect.house").to_string(),
-        BuildingKind::GoodsCompany(id) => i18n.proto_label(
-            "goods_company",
-            &id.prototype().name,
-            &id.prototype().label,
-        ),
+        BuildingKind::GoodsCompany(id) => {
+            i18n.proto_label("goods_company", &id.prototype().name, &id.prototype().label)
+        }
         BuildingKind::RailFreightStation(id) => i18n.proto_label(
             "freight_station",
             &id.prototype().name,
@@ -220,10 +218,7 @@ fn render_goodscompany(uiworld: &UiWorld, sim: &Simulation, b: &Building) {
         .show_children(|| {
             label(i18n.tr_args(
                 "ui.inspect.productivity",
-                &[(
-                    "value",
-                    format!("{:.0}", (productivity * 100.0).round()),
-                )],
+                &[("value", format!("{:.0}", (productivity * 100.0).round()))],
             ));
         });
     }

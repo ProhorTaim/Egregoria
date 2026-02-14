@@ -1,6 +1,6 @@
 use crate::gui::{ErrorTooltip, InspectedBuilding, PotentialCommands, Tool};
-use crate::inputmap::{InputAction, InputMap};
 use crate::i18n::I18n;
+use crate::inputmap::{InputAction, InputMap};
 use crate::rendering::immediate::{ImmediateDraw, ImmediateSound};
 use crate::uiworld::UiWorld;
 use engine::AudioKind;
@@ -158,8 +158,9 @@ pub fn specialbuilding(sim: &Simulation, uiworld: &UiWorld) {
         }
 
         if closest_road.sidewalks(closest_road.src).incoming.is_none() {
-            *uiworld.write::<ErrorTooltip>() =
-                ErrorTooltip::new(Cow::Owned(i18n.tr("ui.error.sidewalk_required").to_string()));
+            *uiworld.write::<ErrorTooltip>() = ErrorTooltip::new(Cow::Owned(
+                i18n.tr("ui.error.sidewalk_required").to_string(),
+            ));
             draw(obb, true);
             return;
         }

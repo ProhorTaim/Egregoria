@@ -52,7 +52,9 @@ pub fn train_properties(uiw: &UiWorld) {
                         .map(|id| RollingStockID::prototype(*id))
                         .enumerate()
                     {
-                        let label = uiw.read::<I18n>().proto_label("rolling_stock", &rs.name, &rs.label);
+                        let label =
+                            uiw.read::<I18n>()
+                                .proto_label("rolling_stock", &rs.name, &rs.label);
                         if button(label).clicked {
                             remove = Some(i);
                         }

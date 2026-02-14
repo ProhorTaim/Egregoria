@@ -63,7 +63,10 @@ pub fn network(uiworld: &UiWorld, sim: &Simulation, opened: &mut bool) {
                     return;
                 }
 
-                if button_primary(i18n.tr("ui.network.start_server")).show().clicked {
+                if button_primary(i18n.tr("ui.network.start_server"))
+                    .show()
+                    .clicked
+                {
                     if let Some(server) = crate::network::start_server(&mut info, sim) {
                         *state = NetworkState::Server(server);
                     }

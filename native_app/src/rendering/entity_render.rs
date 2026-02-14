@@ -60,7 +60,10 @@ impl InstancedRender {
         let pedestrian = match gfx.mesh("pedestrian.glb".as_ref()) {
             Ok(m) => Some(m),
             Err(e) => {
-                log::warn!("Failed to load pedestrian model: {:?}, continuing without it", e);
+                log::warn!(
+                    "Failed to load pedestrian model: {:?}, continuing without it",
+                    e
+                );
                 None
             }
         };
@@ -78,11 +81,14 @@ impl InstancedRender {
         };
 
         // Create InstancedMeshBuilders for loaded models, None for missing ones
-        let (cars_builder, trucks_builder, pedestrians_builder) = if let Some(fallback) = some_model {
+        let (cars_builder, trucks_builder, pedestrians_builder) = if let Some(fallback) = some_model
+        {
             (
                 car.as_ref().map(|m| InstancedMeshBuilder::new_ref(m)),
                 truck.as_ref().map(|m| InstancedMeshBuilder::new_ref(m)),
-                pedestrian.as_ref().map(|m| InstancedMeshBuilder::new_ref(m)),
+                pedestrian
+                    .as_ref()
+                    .map(|m| InstancedMeshBuilder::new_ref(m)),
             )
         } else {
             (None, None, None)
@@ -113,7 +119,7 @@ impl InstancedRender {
         if let Some(pedestrians) = self.pedestrians.as_mut() {
             pedestrians.instances.clear();
         }
-        
+
         for v in sim.world().vehicles.values() {
             let trans = &v.trans;
             let instance = MeshInstance {

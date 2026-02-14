@@ -29,9 +29,21 @@ pub fn roadedit_properties(uiw: &UiWorld) {
             let texs = uiw.read::<UiTextures>();
 
             let light_policy_choices = &[
-                (LightPolicy::NoLights, "ui.roadedit.no_lights", "roadedit_no_light"),
-                (LightPolicy::Lights, "ui.roadedit.traffic_lights", "roadedit_light"),
-                (LightPolicy::StopSigns, "ui.roadedit.stop_signs", "roadedit_stop_sign"),
+                (
+                    LightPolicy::NoLights,
+                    "ui.roadedit.no_lights",
+                    "roadedit_no_light",
+                ),
+                (
+                    LightPolicy::Lights,
+                    "ui.roadedit.traffic_lights",
+                    "roadedit_light",
+                ),
+                (
+                    LightPolicy::StopSigns,
+                    "ui.roadedit.stop_signs",
+                    "roadedit_stop_sign",
+                ),
                 (LightPolicy::Auto, "ui.roadedit.auto", "roadedit_auto"),
             ];
 

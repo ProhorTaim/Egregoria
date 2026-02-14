@@ -3,7 +3,7 @@ use std::sync::Arc;
 use std::time::Instant;
 
 use winit::dpi::PhysicalSize;
-use winit::window::Window;
+use winit::window::{Fullscreen, Window};
 use winit::{
     event::{Event, WindowEvent},
     event_loop::{ControlFlow, EventLoop},
@@ -203,7 +203,18 @@ pub fn start<S: State>() {
             None => el.available_monitors().next().unwrap().size(),
         };
 
+        let start_fullscreen =
+            std::env::var("EGREGORIA_START_FULLSCREEN").ok().as_deref() == Some("1");
+        let disallow_hidpi = std::env::var("EGREGORIA_DISALLOW_HIDPI").ok().as_deref() == Some("1");
+
         let wb = winit::window::WindowBuilder::new();
+        #[cfg(target_os = "macos")]
+        let wb = {
+            use winit::platform::macos::WindowBuilderExtMacOS;
+            wb.with_disallow_hidpi(disallow_hidpi)
+        };
+        #[cfg(not(target_os = "macos"))]
+        let wb = wb;
 
         let window;
         #[cfg(target_os = "windows")]
@@ -217,14 +228,16 @@ pub fn start<S: State>() {
         {
             window = wb;
         }
-        let window = window
+        let mut window_builder = window
             .with_inner_size(PhysicalSize::new(
                 size.width as f32 * 0.8,
                 size.height as f32 * 0.8,
             ))
-            .with_title(format!("Egregoria {}", include_str!("../../VERSION")))
-            .build(&el)
-            .expect("Failed to create window");
+            .with_title(format!("Egregoria {}", include_str!("../../VERSION")));
+        if start_fullscreen {
+            window_builder = window_builder.with_fullscreen(Some(Fullscreen::Borderless(None)));
+        }
+        let window = window_builder.build(&el).expect("Failed to create window");
         let window = Arc::new(window);
         beul::execute(run::<S>(el, window))
     }
