@@ -17,7 +17,7 @@ permissions:
 env:
   RELEASE_BIN: native_app
   HEADLESS_BIN: headless
-  RELEASE_ADDS: README.md LICENSE assets
+  RELEASE_ADDS: README.md LICENSE assets base_mod
   HEADLESS_ADDS: README.md LICENSE assets/paris_54000.txt
 
 jobs:
