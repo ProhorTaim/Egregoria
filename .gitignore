@@ -12,3 +12,8 @@ world
 __pycache__
 */target*
 target*
+# macOS junk
+.DS_Store
+
+# local release bundles
+artifacts/
