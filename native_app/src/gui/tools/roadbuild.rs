@@ -258,9 +258,14 @@ pub fn roadbuild(sim: &Simulation, uiworld: &UiWorld) {
             Some((selected_proj, cur_proj, None, state.pattern_builder.build()))
         }
         CurvedConnection(src, mut dst) => {
-            // For curved connections with HeightReference::Start, recalculate dst height
+            // For curved connections with HeightReference::Start, use fixed target height
+            // Don't recalculate based on src - preserve the intended bridge height
             if state.height_reference == HeightReference::Start {
-                dst.pos.z = src.pos.z + state.height_offset;
+                // Keep dst.z as-is if it's an intersection (already has correct height from previous segment)
+                // Only apply offset if building from ground
+                if dst.is_ground() {
+                    dst.pos.z = src.pos.z + state.height_offset;
+                }
             }
             Some((
                 src,
@@ -272,10 +277,14 @@ pub fn roadbuild(sim: &Simulation, uiworld: &UiWorld) {
 
         Curved(interpoint, selected_proj) => {
             let inter = Some(interpoint);
-            // For curved with HeightReference::Start, recalculate cur_proj height
+            // For curved with HeightReference::Start, preserve target height for existing intersections
             let mut final_proj = cur_proj;
             if state.height_reference == HeightReference::Start {
-                final_proj.pos.z = selected_proj.pos.z + state.height_offset;
+                // Keep cur_proj.z as-is if it's an intersection (already has correct height)
+                // Only apply offset if building to ground
+                if cur_proj.is_ground() {
+                    final_proj.pos.z = selected_proj.pos.z + state.height_offset;
+                }
             }
             Some((
                 selected_proj,

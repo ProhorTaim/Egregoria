@@ -1,19 +1,33 @@
-.idea/*
-.idea
-logs
-/target
-**/*.rs.bk
-*.ini
-world/*
-world
-*.bc
+```
+# Compiled and build artifacts
+*.o
+*.obj
 *.exe
-*.tar.gz
-__pycache__
-*/target*
-target*
-# macOS junk
-.DS_Store
+*.dll
+*.so
+*.a
+*.out
 
-# local release bundles
-artifacts/
+# Dependencies
+target/
+**/target/
+
+# Logs and temp files
+*.log
+*.tmp
+*.swp
+
+# Editors
+.vscode/
+.idea/
+
+# Coverage
+coverage/
+htmlcov/
+.coverage
+
+# Environment
+.env
+.env.local
+*.env.*
+```
